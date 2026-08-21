@@ -4,9 +4,6 @@ An e-commerce and electrical service-booking website for **New Navnath Electroni
 
 ## 🌐 Website
 
-**Website:** https://www.navnathelectricals.com
-
-> Update the website URL above if the production domain changes.
 
 ---
 
