@@ -31,30 +31,43 @@ const Footer = () => {
         <div className="grid-cols-4" style={{ marginBottom: '40px' }}>
           {/* Col 1: Shop Info */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-              <div style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '8px',
-                background: 'var(--accent-yellow)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#0F172A',
-                fontWeight: 800,
-                fontSize: '1.2rem'
-              }}>
-                N
+            <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', textDecoration: 'none' }}>
+              <img
+                src="/logo.jpg"
+                alt="New Navnath Electronics & Electricals"
+                style={{
+                  height: '46px',
+                  width: '46px',
+                  objectFit: 'contain',
+                  borderRadius: '50%',
+                  backgroundColor: '#FFFFFF',
+                  padding: '2px',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)'
+                }}
+              />
+              <div>
+                <div style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontWeight: 800,
+                  fontSize: '1.25rem',
+                  color: '#FFFFFF',
+                  letterSpacing: '-0.5px',
+                  lineHeight: 1.1
+                }}>
+                  NEW NAVNATH
+                </div>
+                <div style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  color: 'var(--accent-yellow)',
+                  letterSpacing: '0.8px',
+                  textTransform: 'uppercase',
+                  marginTop: '2px'
+                }}>
+                  Electronics & Electricals
+                </div>
               </div>
-              <span style={{
-                fontFamily: 'var(--font-heading)',
-                fontWeight: 800,
-                fontSize: '1.2rem',
-                color: '#FFFFFF'
-              }}>
-                NEW NAVNATH
-              </span>
-            </div>
+            </Link>
             <p style={{ fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '16px', color: '#94A3B8' }}>
               {t('our_legacy')} - {t('genuine_products')}
             </p>

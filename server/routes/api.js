@@ -76,4 +76,17 @@ router.get('/admin/users', protect, adminOnly, adminController.getAllUsers);
 router.get('/admin/coupons', protect, adminOnly, adminController.getAllCoupons);
 router.post('/admin/coupons', protect, adminOnly, adminController.createCoupon);
 
+// ==========================================
+// Contact / Inquiry Route
+// ==========================================
+router.post('/contact', (req, res) => {
+  const { name, phone, email, subject, message } = req.body;
+  if (!name || !phone || !message) {
+    return res.status(400).json({ success: false, message: 'Name, phone and message are required' });
+  }
+  // Log inquiry to console (wire up email/SMS service here later)
+  console.log(`📩 [Contact Inquiry] From: ${name} | Phone: ${phone} | Subject: ${subject || 'General'} | Msg: ${message}`);
+  res.json({ success: true, message: 'Inquiry received. Our team will contact you shortly.' });
+});
+
 module.exports = router;

@@ -137,10 +137,17 @@ const Products = ({ onToast }) => {
           </div>
         </div>
 
+        {/* Mobile overlay backdrop */}
+        <div
+          className={`filter-overlay${isFilterOpenMobile ? ' open' : ''}`}
+          onClick={() => setIsFilterOpenMobile(false)}
+        />
+
         <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
           {/* Sidebar Filters */}
-          <aside style={{
-            width: '280px',
+          <aside
+            className={`filter-sidebar${isFilterOpenMobile ? ' open' : ''}`}
+            style={{
             backgroundColor: 'var(--bg-card)',
             borderRadius: '16px',
             border: '1px solid var(--border-color)',
@@ -159,19 +166,22 @@ const Products = ({ onToast }) => {
               <span style={{ fontWeight: 700, fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <FiSliders /> Filter Products
               </span>
-              <button
-                onClick={handleClearFilters}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--primary-blue)',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-              >
-                Reset All
-              </button>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <button
+                  onClick={handleClearFilters}
+                  style={{ background: 'none', border: 'none', color: 'var(--primary-blue)', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  Reset All
+                </button>
+                {/* Mobile close button */}
+                <button
+                  onClick={() => setIsFilterOpenMobile(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.2rem', display: 'flex', alignItems: 'center' }}
+                  aria-label="Close filters"
+                >
+                  <FiX />
+                </button>
+              </div>
             </div>
 
             {/* 1. Category Filter */}

@@ -182,29 +182,29 @@ const Navbar = () => {
           gap: '20px'
         }}>
           {/* Brand Logo */}
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, var(--primary-blue), var(--accent-yellow))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFFFFF',
-              fontSize: '1.4rem',
-              fontWeight: 800,
-              boxShadow: '0 4px 10px rgba(11, 61, 145, 0.25)'
-            }}>
-              N
-            </div>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
+            <img
+              src="/logo.jpg"
+              alt="New Navnath Electronics & Electricals"
+              style={{
+                height: '46px',
+                width: '46px',
+                objectFit: 'contain',
+                borderRadius: '50%',
+                backgroundColor: '#FFFFFF',
+                padding: '2px',
+                boxShadow: '0 4px 10px rgba(11, 61, 145, 0.25)',
+                border: '1.5 solid var(--primary-blue)'
+              }}
+            />
             <div>
               <div style={{
                 fontFamily: 'var(--font-heading)',
                 fontWeight: 800,
                 fontSize: '1.25rem',
                 color: 'var(--primary-blue)',
-                letterSpacing: '-0.5px'
+                letterSpacing: '-0.5px',
+                lineHeight: 1.1
               }}>
                 NEW NAVNATH
               </div>
@@ -213,7 +213,8 @@ const Navbar = () => {
                 fontWeight: 600,
                 color: 'var(--text-secondary)',
                 letterSpacing: '1px',
-                textTransform: 'uppercase'
+                textTransform: 'uppercase',
+                marginTop: '2px'
               }}>
                 Electronics & Electricals
               </div>

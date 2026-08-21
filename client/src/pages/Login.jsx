@@ -60,6 +60,22 @@ const Login = ({ onToast }) => {
           boxShadow: 'var(--card-shadow)'
         }}>
           <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+            <img
+              src="/logo.jpg"
+              alt="New Navnath Logo"
+              style={{
+                width: '76px',
+                height: '76px',
+                objectFit: 'contain',
+                borderRadius: '50%',
+                backgroundColor: '#FFFFFF',
+                padding: '4px',
+                boxShadow: '0 6px 16px rgba(11, 61, 145, 0.2)',
+                marginBottom: '14px',
+                border: '2px solid var(--primary-blue)'
+              }}
+            />
+            <br />
             <span className="badge badge-yellow" style={{ marginBottom: '8px' }}>
               SECURE ACCESS
             </span>

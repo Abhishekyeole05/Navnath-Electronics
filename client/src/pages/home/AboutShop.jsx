@@ -36,13 +36,31 @@ const AboutShop = () => {
                 bottom: '24px',
                 left: '24px',
                 right: '24px',
-                color: '#FFFFFF'
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '14px'
               }}>
-                <div style={{ fontWeight: 800, fontSize: '1.4rem' }}>
-                  NEW NAVNATH ELECTRONICS & ELECTRICALS
-                </div>
-                <div style={{ fontSize: '0.88rem', color: '#CBD5E1', marginTop: '4px' }}>
-                  Manmad's Premier Wholesale Electricals & Service Destination
+                <img
+                  src="/logo.jpg"
+                  alt="New Navnath Official Logo"
+                  style={{
+                    width: '56px',
+                    height: '56px',
+                    objectFit: 'contain',
+                    borderRadius: '50%',
+                    backgroundColor: '#FFFFFF',
+                    padding: '3px',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.5)'
+                  }}
+                />
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '1.35rem', lineHeight: 1.2 }}>
+                    NEW NAVNATH ELECTRONICS & ELECTRICALS
+                  </div>
+                  <div style={{ fontSize: '0.88rem', color: '#CBD5E1', marginTop: '4px' }}>
+                    Manmad's Premier Wholesale Electricals & Service Destination
+                  </div>
                 </div>
               </div>
             </div>

@@ -307,3 +307,98 @@ button, input, select, textarea {
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================
+   Responsive Utilities — Mobile Sidebar Toggle
+   ============================================ */
+
+/* Products page filter sidebar */
+.filter-sidebar {
+  min-width: 240px;
+  width: 240px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 860px) {
+  /* Filter sidebar becomes a full-width collapsible drawer on mobile */
+  .filter-sidebar {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 80vw;
+    max-width: 320px;
+    height: 100vh;
+    z-index: 1200;
+    overflow-y: auto;
+    transition: left 0.3s ease;
+    border-radius: 0 16px 16px 0;
+    padding: 24px 20px;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
+  }
+
+  .filter-sidebar.open {
+    left: 0;
+  }
+
+  .filter-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1100;
+  }
+
+  .filter-overlay.open {
+    display: block;
+  }
+}
+
+/* Dashboard sidebar stacks on mobile */
+@media (max-width: 720px) {
+  .dashboard-grid {
+    flex-direction: column !important;
+  }
+}
+
+/* Admin tab overflow scrolling on mobile */
+@media (max-width: 640px) {
+  .admin-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .admin-tabs::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Container padding on very small screens */
+@media (max-width: 480px) {
+  .container {
+    padding: 0 12px;
+  }
+
+  h1 { font-size: 1.6rem !important; }
+  h2 { font-size: 1.3rem !important; }
+}
+
+/* ============================================
+   Improved button disabled states
+   ============================================ */
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ============================================
+   Page transition fade-in
+   ============================================ */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: fadeInUp 0.4s ease both;
+}

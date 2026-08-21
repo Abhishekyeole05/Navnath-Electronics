@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { FiEye, FiEyeOff, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 
 const Register = ({ onToast }) => {
   const { register } = useAuth();
@@ -10,11 +11,28 @@ const Register = ({ onToast }) => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const passwordsMatch = confirmPassword && password === confirmPassword;
+  const passwordValid = password.length >= 6;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !email || !password) return;
+
+    if (!passwordValid) {
+      if (onToast) onToast('Password must be at least 6 characters', 'warning');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      if (onToast) onToast('Passwords do not match', 'warning');
+      return;
+    }
+
     setLoading(true);
     const result = await register(name, email, password, phone);
     setLoading(false);
@@ -37,6 +55,22 @@ const Register = ({ onToast }) => {
           boxShadow: 'var(--card-shadow)'
         }}>
           <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+            <img
+              src="/logo.jpg"
+              alt="New Navnath Logo"
+              style={{
+                width: '76px',
+                height: '76px',
+                objectFit: 'contain',
+                borderRadius: '50%',
+                backgroundColor: '#FFFFFF',
+                padding: '4px',
+                boxShadow: '0 6px 16px rgba(11, 61, 145, 0.2)',
+                marginBottom: '14px',
+                border: '2px solid var(--primary-blue)'
+              }}
+            />
+            <br />
             <span className="badge badge-blue" style={{ marginBottom: '8px' }}>
               NEW NAVNATH ACCOUNT
             </span>
@@ -49,6 +83,7 @@ const Register = ({ onToast }) => {
           </div>
 
           <form onSubmit={handleSubmit}>
+            {/* Full Name */}
             <div className="form-group">
               <label className="form-label">Full Name *</label>
               <input
@@ -61,6 +96,7 @@ const Register = ({ onToast }) => {
               />
             </div>
 
+            {/* Email */}
             <div className="form-group">
               <label className="form-label">Email Address *</label>
               <input
@@ -73,6 +109,7 @@ const Register = ({ onToast }) => {
               />
             </div>
 
+            {/* Phone */}
             <div className="form-group">
               <label className="form-label">Phone Number (Nashik contact)</label>
               <input
@@ -84,16 +121,69 @@ const Register = ({ onToast }) => {
               />
             </div>
 
+            {/* Password */}
             <div className="form-group">
-              <label className="form-label">Create Password *</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="form-input"
-                placeholder="••••••••"
-              />
+              <label className="form-label">Create Password * (min. 6 characters)</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="form-input"
+                  placeholder="••••••••"
+                  style={{ paddingRight: '44px' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '1.1rem'
+                  }}
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
+              {password && (
+                <div style={{ fontSize: '0.78rem', marginTop: '4px', color: passwordValid ? 'var(--success)' : 'var(--danger)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {passwordValid ? <FiCheckCircle /> : <FiAlertCircle />}
+                  {passwordValid ? 'Password strength OK' : 'At least 6 characters required'}
+                </div>
+              )}
+            </div>
+
+            {/* Confirm Password */}
+            <div className="form-group">
+              <label className="form-label">Confirm Password *</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type={showConfirm ? 'text' : 'password'}
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="form-input"
+                  placeholder="••••••••"
+                  style={{ paddingRight: '44px' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  style={{
+                    position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '1.1rem'
+                  }}
+                >
+                  {showConfirm ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
+              {confirmPassword && (
+                <div style={{ fontSize: '0.78rem', marginTop: '4px', color: passwordsMatch ? 'var(--success)' : 'var(--danger)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  {passwordsMatch ? <FiCheckCircle /> : <FiAlertCircle />}
+                  {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
+                </div>
+              )}
             </div>
 
             <button

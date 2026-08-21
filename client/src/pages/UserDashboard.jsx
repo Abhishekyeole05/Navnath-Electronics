@@ -6,7 +6,7 @@ import { useWishlist } from '../context/WishlistContext';
 import ProductCard from '../components/common/ProductCard';
 import { 
   FiPackage, FiCalendar, FiHeart, FiUser, FiLogOut, 
-  FiCheckCircle, FiClock, FiAlertCircle 
+  FiCheckCircle, FiEdit2, FiSave
 } from 'react-icons/fi';
 
 const UserDashboard = ({ onToast }) => {
@@ -21,6 +21,11 @@ const UserDashboard = ({ onToast }) => {
   const [bookings, setBookings] = useState([]);
   const [wishlistProducts, setWishlistProducts] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
+
+  // Profile edit state
+  const [profileForm, setProfileForm] = useState({ name: '', phone: '', street: '', city: '', state: '', postalCode: '' });
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
 
   useEffect(() => {
     const tabParam = queryParams.get('tab');
@@ -57,6 +62,20 @@ const UserDashboard = ({ onToast }) => {
     fetchUserData();
   }, [wishlist]);
 
+  // Pre-fill profile form when user loads
+  useEffect(() => {
+    if (user) {
+      setProfileForm({
+        name: user.name || '',
+        phone: user.phone || '',
+        street: (user.addresses && user.addresses[0]?.street) || '',
+        city: (user.addresses && user.addresses[0]?.city) || '',
+        state: (user.addresses && user.addresses[0]?.state) || 'Maharashtra',
+        postalCode: (user.addresses && user.addresses[0]?.postalCode) || ''
+      });
+    }
+  }, [user]);
+
   if (authLoading) {
     return <div className="container" style={{ padding: '80px 0', textAlign: 'center' }}>Loading user profile...</div>;
   }
@@ -72,6 +91,30 @@ const UserDashboard = ({ onToast }) => {
       </div>
     );
   }
+
+  const handleProfileSave = async (e) => {
+    e.preventDefault();
+    setSavingProfile(true);
+    setProfileSaved(false);
+    try {
+      await axios.put('/api/auth/address', {
+        name: profileForm.name,
+        phone: profileForm.phone,
+        address: {
+          street: profileForm.street,
+          city: profileForm.city,
+          state: profileForm.state,
+          postalCode: profileForm.postalCode
+        }
+      });
+      setProfileSaved(true);
+      if (onToast) onToast('Profile updated successfully!', 'success');
+    } catch (err) {
+      if (onToast) onToast('Failed to update profile', 'error');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
 
   const getStatusBadge = (status) => {
     const st = (status || 'Processing').toLowerCase();
@@ -165,6 +208,25 @@ const UserDashboard = ({ onToast }) => {
                 }}
               >
                 <FiCalendar /> Service Bookings ({bookings.length})
+              </button>
+
+              <button
+                onClick={() => setActiveTab('profile')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  backgroundColor: activeTab === 'profile' ? 'var(--primary-blue)' : 'transparent',
+                  color: activeTab === 'profile' ? '#FFFFFF' : 'var(--text-primary)',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  textAlign: 'left'
+                }}
+              >
+                <FiUser /> Edit Profile
               </button>
 
               <button
@@ -343,7 +405,55 @@ const UserDashboard = ({ onToast }) => {
               </div>
             )}
 
-            {/* 3. WISHLIST TAB */}
+            {/* 3. PROFILE TAB */}
+            {activeTab === 'profile' && (
+              <div style={{ backgroundColor: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', padding: '28px', boxShadow: 'var(--card-shadow)' }}>
+                <h2 style={{ fontSize: '1.4rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <FiEdit2 /> Edit Profile
+                </h2>
+                <form onSubmit={handleProfileSave}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+                    <div className="form-group">
+                      <label className="form-label">Full Name</label>
+                      <input type="text" value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} className="form-input" placeholder="Your name" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Phone Number</label>
+                      <input type="tel" value={profileForm.phone} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })} className="form-input" placeholder="+91 9876543210" />
+                    </div>
+                  </div>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '12px', marginTop: '8px', color: 'var(--text-secondary)' }}>Default Delivery Address</h3>
+                  <div className="form-group">
+                    <label className="form-label">Street / Flat / Society</label>
+                    <input type="text" value={profileForm.street} onChange={(e) => setProfileForm({ ...profileForm, street: e.target.value })} className="form-input" placeholder="Flat no., Society, Street..." />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px' }}>
+                    <div className="form-group">
+                      <label className="form-label">City</label>
+                      <input type="text" value={profileForm.city} onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })} className="form-input" placeholder="Manmad" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">State</label>
+                      <input type="text" value={profileForm.state} onChange={(e) => setProfileForm({ ...profileForm, state: e.target.value })} className="form-input" placeholder="Maharashtra" />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Postal Code</label>
+                      <input type="text" value={profileForm.postalCode} onChange={(e) => setProfileForm({ ...profileForm, postalCode: e.target.value })} className="form-input" placeholder="422001" />
+                    </div>
+                  </div>
+                  {profileSaved && (
+                    <div style={{ padding: '10px 14px', backgroundColor: 'rgba(16,185,129,0.12)', color: 'var(--success)', borderRadius: '8px', fontSize: '0.88rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+                      <FiCheckCircle /> Profile updated successfully!
+                    </div>
+                  )}
+                  <button type="submit" disabled={savingProfile} className="btn btn-primary" style={{ marginTop: '8px', padding: '12px 28px' }}>
+                    <FiSave /> {savingProfile ? 'Saving...' : 'Save Profile'}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* 4. WISHLIST TAB */}
             {activeTab === 'wishlist' && (
               <div>
                 <h2 style={{ fontSize: '1.4rem', marginBottom: '20px', color: 'var(--text-primary)' }}>

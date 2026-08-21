@@ -5,6 +5,7 @@ import Footer from './components/common/Footer';
 import FloatingButtons from './components/common/FloatingButtons';
 import ScrollProgressBar from './components/common/ScrollProgressBar';
 import Toast from './components/common/Toast';
+import PrivateRoute from './components/common/PrivateRoute';
 
 // Pages
 import Home from './pages/Home';
@@ -19,6 +20,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import NotFound from './pages/NotFound';
 
 const App = () => {
   const [toast, setToast] = useState({ message: '', type: 'success' });
@@ -39,18 +41,54 @@ const App = () => {
         
         <main style={{ flex: 1 }}>
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<Home onToast={showToast} />} />
             <Route path="/products" element={<Products onToast={showToast} />} />
             <Route path="/products/:id" element={<ProductDetails onToast={showToast} />} />
             <Route path="/services" element={<Services onToast={showToast} />} />
             <Route path="/cart" element={<Cart onToast={showToast} />} />
-            <Route path="/checkout" element={<Checkout onToast={showToast} />} />
-            <Route path="/order-success/:id" element={<OrderSuccess />} />
             <Route path="/contact" element={<Contact onToast={showToast} />} />
             <Route path="/login" element={<Login onToast={showToast} />} />
             <Route path="/register" element={<Register onToast={showToast} />} />
-            <Route path="/dashboard" element={<UserDashboard onToast={showToast} />} />
-            <Route path="/admin" element={<AdminDashboard onToast={showToast} />} />
+
+            {/* Protected Routes — login required */}
+            <Route
+              path="/checkout"
+              element={
+                <PrivateRoute>
+                  <Checkout onToast={showToast} />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/order-success/:id"
+              element={
+                <PrivateRoute>
+                  <OrderSuccess />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <PrivateRoute>
+                  <UserDashboard onToast={showToast} />
+                </PrivateRoute>
+              }
+            />
+
+            {/* Admin-only Route */}
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute adminOnly={true}>
+                  <AdminDashboard onToast={showToast} />
+                </PrivateRoute>
+              }
+            />
+
+            {/* 404 Catch-all */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
 
