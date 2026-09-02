@@ -1,11 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { connectDB } = require('./config/db');
+
+// Load environment variables before anything else
+dotenv.config();
+
+const { connectDB, getIsConnected, getUseMemoryStore } = require('./config/db');
 const { seedDatabase } = require('./utils/seedData');
 const apiRoutes = require('./routes/api');
-
-dotenv.config();
 
 const app = express();
 
@@ -18,9 +20,12 @@ app.use('/api', apiRoutes);
 
 // Root health check endpoint
 app.get('/', (req, res) => {
+  const isAtlas = getIsConnected();
   res.json({
     success: true,
     message: '⚡ New Navnath Electronics & Electricals API is Running!',
+    database: isAtlas ? 'MongoDB Atlas (Live Cloud Database)' : 'Local In-Memory Mode (Set MONGODB_URI in server/.env to connect Atlas)',
+    isConnectedToAtlas: isAtlas,
     version: '1.0.0',
     endpoints: {
       products: '/api/products',
@@ -50,6 +55,8 @@ const startServer = async () => {
   app.listen(PORT, () => {
     console.log(`=======================================================`);
     console.log(`⚡ [New Navnath Server] API Running on Port ${PORT}`);
+    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🗄️  Database: ${getIsConnected() ? 'MongoDB Atlas (Cloud Cluster)' : 'Local In-Memory Demo Store'}`);
     console.log(`=======================================================`);
   });
 };

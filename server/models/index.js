@@ -114,7 +114,8 @@ const orderSchema = new mongoose.Schema({
   couponApplied: { type: String, default: null },
   discountAmount: { type: Number, default: 0 },
   subtotal: { type: Number, required: true },
-  totalAmount: { type: Number, required: true }
+  totalAmount: { type: Number, required: true },
+  paymentDetails: { type: mongoose.Schema.Types.Mixed, default: null }
 }, { timestamps: true });
 
 const couponSchema = new mongoose.Schema({
@@ -145,44 +146,90 @@ const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 const Coupon = mongoose.models.Coupon || mongoose.model('Coupon', couponSchema);
 const Review = mongoose.models.Review || mongoose.model('Review', reviewSchema);
 
-// Helper wrapper to interact with either MongoDB or Local Memory Store
+const formatDoc = (doc) => {
+  if (!doc) return null;
+  const obj = typeof doc.toObject === 'function' ? doc.toObject() : { ...doc };
+  if (obj._id) {
+    obj.id = String(obj._id);
+    obj._id = String(obj._id);
+  }
+  return obj;
+};
+
+// Helper wrapper to interact with either MongoDB Atlas or Local Memory Store
 const dbHelper = {
   async find(collectionName, model, filter = {}) {
     if (getUseMemoryStore()) {
       return memoryStore.find(collectionName, filter);
     }
-    return await model.find(filter).lean();
+    const docs = await model.find(filter).sort({ createdAt: -1 }).lean();
+    return docs.map(formatDoc);
   },
+
   async findOne(collectionName, model, filter = {}) {
     if (getUseMemoryStore()) {
       return memoryStore.findOne(collectionName, filter);
     }
-    return await model.findOne(filter).lean();
+    const doc = await model.findOne(filter).lean();
+    return formatDoc(doc);
   },
+
   async findById(collectionName, model, id) {
     if (getUseMemoryStore()) {
       return memoryStore.findById(collectionName, id);
     }
-    return await model.findById(id).lean();
+    let doc = null;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      doc = await model.findById(id).lean();
+    }
+    if (!doc) {
+      doc = await model.findOne({
+        $or: [
+          { slug: id },
+          { orderId: id },
+          { bookingId: id }
+        ]
+      }).lean();
+    }
+    return formatDoc(doc);
   },
+
   async create(collectionName, model, data) {
     if (getUseMemoryStore()) {
       return memoryStore.create(collectionName, data);
     }
     const doc = await model.create(data);
-    return doc.toObject();
+    return formatDoc(doc);
   },
+
   async findByIdAndUpdate(collectionName, model, id, updateData) {
     if (getUseMemoryStore()) {
       return memoryStore.findByIdAndUpdate(collectionName, id, updateData);
     }
-    return await model.findByIdAndUpdate(id, updateData, { new: true }).lean();
+    let doc = null;
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      doc = await model.findByIdAndUpdate(id, updateData, { new: true }).lean();
+    }
+    if (!doc) {
+      doc = await model.findOneAndUpdate(
+        { $or: [{ slug: id }, { orderId: id }, { bookingId: id }] },
+        updateData,
+        { new: true }
+      ).lean();
+    }
+    return formatDoc(doc);
   },
+
   async findByIdAndDelete(collectionName, model, id) {
     if (getUseMemoryStore()) {
       return memoryStore.findByIdAndDelete(collectionName, id);
     }
-    return await model.findByIdAndDelete(id).lean();
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      return await model.findByIdAndDelete(id).lean();
+    }
+    return await model.findOneAndDelete({
+      $or: [{ slug: id }, { orderId: id }, { bookingId: id }]
+    }).lean();
   }
 };
 

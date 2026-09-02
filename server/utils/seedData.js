@@ -465,9 +465,14 @@ const initialCoupons = [
 ];
 
 const seedDatabase = async () => {
-  console.log('🌱 [New Navnath Seed] Starting automatic seeding...');
-
   try {
+    const existingProducts = await dbHelper.find('products', Product);
+    if (existingProducts && existingProducts.length > 0) {
+      console.log(`📦 [Database Status] Real catalog found with ${existingProducts.length} product(s). Seeding skipped to protect existing data.`);
+      return;
+    }
+
+    console.log('🌱 [New Navnath Seed] Empty database detected. Performing initial first-time catalog setup...');
     // 1. Seed Categories
     for (const cat of initialCategories) {
       const exists = await dbHelper.findOne('categories', Category, { slug: cat.slug });
