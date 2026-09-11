@@ -2,21 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import ProductCard from '../components/common/ProductCard';
 import { 
-  FiPackage, FiCalendar, FiHeart, FiUser, FiLogOut, 
-  FiCheckCircle, FiClock, FiAlertCircle 
+  FiPackage, FiCalendar, FiHeart, FiShoppingCart, FiUser, FiLogOut, 
+  FiCheckCircle, FiClock, FiAlertCircle, FiTrash2, FiArrowRight, FiZap
 } from 'react-icons/fi';
 
 const UserDashboard = ({ onToast }) => {
   const { user, logout, loading: authLoading } = useAuth();
+  const { cartItems, subtotal, totalAmount, removeFromCart, updateQuantity } = useCart();
   const { wishlist } = useWishlist();
   const location = useLocation();
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(location.search);
 
-  const [activeTab, setActiveTab] = useState(queryParams.get('tab') || 'orders');
+  const [activeTab, setActiveTab] = useState(queryParams.get('tab') || 'cart');
   const [orders, setOrders] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [wishlistProducts, setWishlistProducts] = useState([]);
@@ -66,9 +68,9 @@ const UserDashboard = ({ onToast }) => {
       <div className="container" style={{ padding: '80px 0', textAlign: 'center' }}>
         <h2>Please Sign In</h2>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
-          Sign in to view your orders, service bookings, and wishlist.
+          Sign in to view your cart, orders, service bookings, and wishlist.
         </p>
-        <Link to="/" className="btn btn-primary">Go to Home Page</Link>
+        <Link to="/login" className="btn btn-primary">Sign In to Account</Link>
       </div>
     );
   }
@@ -85,10 +87,10 @@ const UserDashboard = ({ onToast }) => {
     <div style={{ backgroundColor: 'var(--bg-main)', minHeight: '85vh', padding: '40px 0' }}>
       <div className="container">
         <h1 style={{ fontSize: '2.2rem', marginBottom: '8px', color: 'var(--text-primary)' }}>
-          My Dashboard
+          My Customer Dashboard
         </h1>
         <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', marginBottom: '32px' }}>
-          Welcome back, <strong>{user.name}</strong>! Track your electrical orders, technician visits, and favorites.
+          Welcome back, <strong>{user.name}</strong>! Track your shopping cart, electrical orders, technician visits, and favorites.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '32px', alignItems: 'flex-start' }}>
@@ -120,7 +122,7 @@ const UserDashboard = ({ onToast }) => {
                 fontWeight: 800,
                 fontSize: '1.2rem'
               }}>
-                {user.name.charAt(0).toUpperCase()}
+                {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
               </div>
               <div>
                 <div style={{ fontWeight: 700 }}>{user.name}</div>
@@ -129,6 +131,25 @@ const UserDashboard = ({ onToast }) => {
             </div>
 
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button
+                onClick={() => setActiveTab('cart')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  backgroundColor: activeTab === 'cart' ? 'var(--primary-blue)' : 'transparent',
+                  color: activeTab === 'cart' ? '#FFFFFF' : 'var(--text-primary)',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  textAlign: 'left'
+                }}
+              >
+                <FiShoppingCart /> My Cart ({cartItems.length})
+              </button>
+
               <button
                 onClick={() => setActiveTab('orders')}
                 style={{
@@ -164,7 +185,7 @@ const UserDashboard = ({ onToast }) => {
                   textAlign: 'left'
                 }}
               >
-                <FiCalendar /> Service Bookings ({bookings.length})
+                <FiCalendar /> Electrician Bookings ({bookings.length})
               </button>
 
               <button
@@ -232,7 +253,106 @@ const UserDashboard = ({ onToast }) => {
 
           {/* Right Main Content */}
           <main style={{ flex: 1 }}>
-            {/* 1. ORDERS TAB */}
+            {/* 1. CART TAB */}
+            {activeTab === 'cart' && (
+              <div style={{
+                backgroundColor: 'var(--bg-card)',
+                borderRadius: '16px',
+                border: '1px solid var(--border-color)',
+                padding: '28px',
+                boxShadow: 'var(--card-shadow)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '1.4rem' }}>Products in My Cart ({cartItems.length})</h2>
+                  {cartItems.length > 0 && (
+                    <Link to="/checkout" className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      Proceed to Checkout <FiArrowRight />
+                    </Link>
+                  )}
+                </div>
+
+                {cartItems.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
+                    Your cart is currently empty. <Link to="/products" style={{ color: 'var(--primary-blue)', fontWeight: 700 }}>Browse Electrical Products</Link>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {cartItems.map((item) => (
+                      <div key={item._id || item.id} style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '16px',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '12px',
+                        backgroundColor: 'var(--bg-secondary)',
+                        flexWrap: 'wrap',
+                        gap: '14px'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                          <img
+                            src={item.image || (item.images && item.images[0]) || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=400&q=80'}
+                            alt=""
+                            style={{ width: '64px', height: '64px', objectFit: 'cover', borderRadius: '8px' }}
+                          />
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                              {item.name}
+                            </div>
+                            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                              Brand: {item.brand || 'Electricals'} | Unit Price: ₹{(item.price || 0).toLocaleString('en-IN')}
+                            </div>
+                            <div style={{ fontWeight: 800, color: 'var(--primary-blue)', marginTop: '4px' }}>
+                              Subtotal: ₹{((item.price || 0) * (item.quantity || 1)).toLocaleString('en-IN')}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>Qty: {item.quantity}</span>
+                          <button
+                            onClick={() => removeFromCart(item._id || item.id)}
+                            className="btn btn-outline btn-sm"
+                            style={{ borderColor: 'var(--danger)', color: 'var(--danger)', padding: '6px 12px' }}
+                          >
+                            <FiTrash2 /> Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Cart Summary Footer */}
+                    <div style={{
+                      marginTop: '20px',
+                      paddingTop: '20px',
+                      borderTop: '2px solid var(--border-color)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '16px'
+                    }}>
+                      <div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total Payable Amount:</div>
+                        <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--primary-blue)' }}>
+                          ₹{(totalAmount || subtotal || 0).toLocaleString('en-IN')}
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '12px' }}>
+                        <Link to="/cart" className="btn btn-outline">
+                          View Full Cart
+                        </Link>
+                        <Link to="/checkout" className="btn btn-accent" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <FiZap /> Checkout Now
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 2. ORDERS TAB */}
             {activeTab === 'orders' && (
               <div style={{
                 backgroundColor: 'var(--bg-card)',
@@ -241,7 +361,7 @@ const UserDashboard = ({ onToast }) => {
                 padding: '28px',
                 boxShadow: 'var(--card-shadow)'
               }}>
-                <h2 style={{ fontSize: '1.4rem', marginBottom: '20px' }}>Order History</h2>
+                <h2 style={{ fontSize: '1.4rem', marginBottom: '20px' }}>My Orders ({orders.length})</h2>
 
                 {orders.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
@@ -249,54 +369,80 @@ const UserDashboard = ({ onToast }) => {
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    {orders.map((ord) => (
-                      <div key={ord._id || ord.id} style={{
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '12px',
-                        padding: '20px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '14px'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-                          <div>
-                            <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Order #{ord._id || ord.id}</span>
-                            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                              Placed on: {new Date(ord.createdAt || Date.now()).toLocaleDateString('en-IN')}
-                            </div>
-                          </div>
-                          {getStatusBadge(ord.status)}
-                        </div>
+                    {orders.map((ord) => {
+                      const orderItems = ord.items || ord.orderItems || [];
+                      const total = ord.totalAmount || ord.totalPrice || ord.subtotal || 0;
+                      const orderCode = ord.orderId || ord._id || ord.id;
+                      const status = ord.orderStatus || ord.status || 'Processing';
 
-                        {/* Items */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                          {(ord.orderItems || []).map((item, i) => (
-                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: 'var(--bg-secondary)', padding: '8px 12px', borderRadius: '8px' }}>
-                              <img src={item.image} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '6px' }} />
-                              <div>
-                                <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{item.name}</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Qty: {item.qty}</div>
+                      return (
+                        <div key={ord._id || ord.id} style={{
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '12px',
+                          padding: '20px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '14px'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                            <div>
+                              <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--primary-blue)' }}>
+                                Order #{orderCode}
+                              </span>
+                              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                                Placed on: {new Date(ord.createdAt || Date.now()).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                               </div>
                             </div>
-                          ))}
-                        </div>
+                            {getStatusBadge(status)}
+                          </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
-                          <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--primary-blue)' }}>
-                            ₹{(ord.totalPrice || 0).toLocaleString('en-IN')}
-                          </span>
-                          <Link to={`/order-success/${ord._id || ord.id}`} className="btn btn-outline btn-sm">
-                            View Receipt
-                          </Link>
+                          {/* Items */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {orderItems.map((item, i) => (
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'var(--bg-secondary)', padding: '10px 14px', borderRadius: '8px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                  <img 
+                                    src={item.image || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=400&q=80'} 
+                                    alt="" 
+                                    style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '6px' }} 
+                                  />
+                                  <div>
+                                    <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{item.name}</div>
+                                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                                      Qty: {item.quantity || item.qty} × ₹{(item.price || 0).toLocaleString('en-IN')}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div style={{ fontWeight: 700 }}>
+                                  ₹{((item.price || 0) * (item.quantity || item.qty || 1)).toLocaleString('en-IN')}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '12px', flexWrap: 'wrap', gap: '10px' }}>
+                            <div>
+                              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total: </span>
+                              <span style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--primary-blue)' }}>
+                                ₹{total.toLocaleString('en-IN')}
+                              </span>
+                              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginLeft: '10px' }}>
+                                Payment: {ord.paymentMethod ? ord.paymentMethod.toUpperCase() : 'COD'} ({ord.paymentStatus || 'Pending'})
+                              </span>
+                            </div>
+                            <Link to={`/order-success/${orderCode}`} className="btn btn-outline btn-sm">
+                              View Receipt / Invoice
+                            </Link>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
             )}
 
-            {/* 2. BOOKINGS TAB */}
+            {/* 3. BOOKINGS TAB */}
             {activeTab === 'bookings' && (
               <div style={{
                 backgroundColor: 'var(--bg-card)',
@@ -305,7 +451,7 @@ const UserDashboard = ({ onToast }) => {
                 padding: '28px',
                 boxShadow: 'var(--card-shadow)'
               }}>
-                <h2 style={{ fontSize: '1.4rem', marginBottom: '20px' }}>My Electrician Bookings</h2>
+                <h2 style={{ fontSize: '1.4rem', marginBottom: '20px' }}>My Electrician Bookings ({bookings.length})</h2>
 
                 {bookings.length === 0 ? (
                   <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
@@ -325,15 +471,20 @@ const UserDashboard = ({ onToast }) => {
                         gap: '16px'
                       }}>
                         <div>
-                          <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'var(--text-primary)' }}>
-                            {bk.serviceTitle}
+                          <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-primary)' }}>
+                            {bk.serviceName || bk.serviceTitle || 'Home Electrical Service'}
                           </div>
                           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                            📅 {bk.date} | ⏰ {bk.timeSlot}
+                            📅 Date: {bk.preferredDate || bk.date} {bk.message ? `| 📝 ${bk.message}` : ''}
                           </div>
                           <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                            📍 {bk.address}
+                            📍 Location: {bk.address}
                           </div>
+                          {bk.technicianName && bk.technicianName !== 'Pending Assignment' && (
+                            <div style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: 600, marginTop: '4px' }}>
+                              👨‍🔧 Assigned: {bk.technicianName}
+                            </div>
+                          )}
                         </div>
                         {getStatusBadge(bk.status)}
                       </div>
@@ -343,7 +494,7 @@ const UserDashboard = ({ onToast }) => {
               </div>
             )}
 
-            {/* 3. WISHLIST TAB */}
+            {/* 4. WISHLIST TAB */}
             {activeTab === 'wishlist' && (
               <div>
                 <h2 style={{ fontSize: '1.4rem', marginBottom: '20px', color: 'var(--text-primary)' }}>

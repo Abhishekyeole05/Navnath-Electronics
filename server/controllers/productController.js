@@ -62,7 +62,6 @@ exports.getProductById = async (req, res) => {
     const { id } = req.params;
     let product = await dbHelper.findById('products', Product, id);
     if (!product) {
-      // Try searching by slug
       product = await dbHelper.findOne('products', Product, { slug: id });
     }
 
@@ -70,7 +69,13 @@ exports.getProductById = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    const reviews = await dbHelper.find('reviews', Review, { productId: product._id || product.id });
+    const prodId = String(product._id || product.id);
+    const allReviews = await dbHelper.find('reviews', Review);
+    const reviews = allReviews.filter(r => 
+      String(r.productId) === prodId || 
+      String(r.productId) === String(product.slug) || 
+      String(r.productId) === String(id)
+    );
 
     res.json({
       success: true,
@@ -91,14 +96,33 @@ exports.addReview = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide rating and review comment' });
     }
 
+    let product = await dbHelper.findById('products', Product, productId);
+    if (!product) {
+      product = await dbHelper.findOne('products', Product, { slug: productId });
+    }
+
+    const targetProdId = product ? (product._id || product.id) : productId;
+
     const newReview = await dbHelper.create('reviews', Review, {
-      productId,
+      productId: String(targetProdId),
       userId: req.user.id,
-      userName: req.user.name,
+      userName: req.user.name || 'Customer',
       rating: Number(rating),
       comment,
       date: new Date().toISOString().split('T')[0]
     });
+
+    // Update product overall rating and reviews count in database
+    if (product) {
+      const allReviews = await dbHelper.find('reviews', Review);
+      const prodReviews = allReviews.filter(r => String(r.productId) === String(targetProdId) || String(r.productId) === String(product.slug));
+      const avgRating = Number((prodReviews.reduce((sum, r) => sum + Number(r.rating || 5), 0) / (prodReviews.length || 1)).toFixed(1));
+      
+      await dbHelper.findByIdAndUpdate('products', Product, product._id || product.id, {
+        rating: avgRating,
+        reviewsCount: prodReviews.length
+      });
+    }
 
     res.status(201).json({
       success: true,

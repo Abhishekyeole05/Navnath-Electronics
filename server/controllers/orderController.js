@@ -3,39 +3,76 @@ const { Order, Coupon, Product, dbHelper } = require('../models');
 exports.createOrder = async (req, res) => {
   try {
     const { 
-      customerName, email, mobile, items, shippingAddress, 
-      paymentMethod, couponApplied, discountAmount, subtotal, totalAmount 
+      customerName, email, mobile, items, orderItems, shippingAddress, 
+      paymentMethod, couponApplied, couponCode, discountAmount, 
+      subtotal, itemsPrice, totalAmount, totalPrice 
     } = req.body;
 
-    if (!items || items.length === 0) {
+    const rawItems = items || orderItems;
+    if (!rawItems || rawItems.length === 0) {
       return res.status(400).json({ success: false, message: 'Your cart is empty' });
     }
 
+    const normalizedItems = rawItems.map(item => ({
+      productId: item.productId || item.product || item._id || item.id,
+      name: item.name,
+      price: Number(item.price || 0),
+      quantity: Number(item.quantity || item.qty || 1),
+      image: item.image || (item.images && item.images[0]) || '',
+      brand: item.brand || ''
+    }));
+
+    const finalSubtotal = Number(subtotal || itemsPrice || 0);
+    const finalTotal = Number(totalAmount || totalPrice || finalSubtotal);
     const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+
+    let normPaymentMethod = 'COD';
+    if (paymentMethod) {
+      const pm = String(paymentMethod).toLowerCase();
+      if (pm.includes('razorpay') || pm.includes('online')) normPaymentMethod = 'Razorpay';
+      else if (pm.includes('upi')) normPaymentMethod = 'UPI';
+      else if (pm.includes('card')) normPaymentMethod = 'Card';
+      else if (pm.includes('instant') || pm.includes('demo')) normPaymentMethod = 'Demo Instant';
+      else normPaymentMethod = 'COD';
+    }
+
+    const isPaid = (normPaymentMethod !== 'COD' && normPaymentMethod !== 'cod');
+
     const newOrder = await dbHelper.create('orders', Order, {
       orderId,
       userId: req.user.id,
-      customerName,
-      email,
-      mobile,
-      items,
-      shippingAddress,
-      paymentMethod: paymentMethod || 'COD',
-      paymentStatus: paymentMethod === 'COD' ? 'Pending' : 'Paid',
+      customerName: customerName || (shippingAddress && shippingAddress.fullName) || req.user.name,
+      email: email || req.user.email || 'customer@navnath.com',
+      mobile: mobile || (shippingAddress && shippingAddress.phone) || req.user.phone || '',
+      items: normalizedItems,
+      shippingAddress: {
+        fullName: (shippingAddress && shippingAddress.fullName) || customerName || req.user.name,
+        phone: (shippingAddress && shippingAddress.phone) || mobile || req.user.phone || '',
+        address: (shippingAddress && (shippingAddress.address || shippingAddress.street)) || '',
+        street: (shippingAddress && (shippingAddress.street || shippingAddress.address)) || '',
+        city: (shippingAddress && shippingAddress.city) || 'Manmad',
+        state: (shippingAddress && shippingAddress.state) || 'Maharashtra',
+        pinCode: (shippingAddress && (shippingAddress.pinCode || shippingAddress.postalCode)) || '422001',
+        postalCode: (shippingAddress && (shippingAddress.postalCode || shippingAddress.pinCode)) || '422001'
+      },
+      paymentMethod: normPaymentMethod,
+      paymentStatus: isPaid ? 'Paid' : 'Pending',
       orderStatus: 'Processing',
-      couponApplied: couponApplied || null,
+      couponApplied: couponApplied || couponCode || null,
       discountAmount: discountAmount || 0,
-      subtotal,
-      totalAmount
+      subtotal: finalSubtotal,
+      totalAmount: finalTotal
     });
 
     // Reduce stock for ordered items
-    for (const item of items) {
-      const prod = await dbHelper.findById('products', Product, item.productId);
-      if (prod && prod.stock > 0) {
-        await dbHelper.findByIdAndUpdate('products', Product, item.productId, {
-          stock: Math.max(0, prod.stock - (item.quantity || 1))
-        });
+    for (const item of normalizedItems) {
+      if (item.productId) {
+        const prod = await dbHelper.findById('products', Product, item.productId);
+        if (prod && prod.stock > 0) {
+          await dbHelper.findByIdAndUpdate('products', Product, item.productId, {
+            stock: Math.max(0, prod.stock - item.quantity)
+          });
+        }
       }
     }
 
@@ -50,7 +87,10 @@ exports.createOrder = async (req, res) => {
 
 exports.getUserOrders = async (req, res) => {
   try {
-    const orders = await dbHelper.find('orders', Order, { userId: req.user.id });
+    let orders = await dbHelper.find('orders', Order, { userId: req.user.id });
+    if (!orders || orders.length === 0) {
+      orders = await dbHelper.find('orders', Order, { email: req.user.email });
+    }
     orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     res.json({ success: true, orders });
   } catch (error) {
@@ -61,7 +101,10 @@ exports.getUserOrders = async (req, res) => {
 exports.getOrderById = async (req, res) => {
   try {
     const { id } = req.params;
-    const order = await dbHelper.findOne('orders', Order, { orderId: id });
+    let order = await dbHelper.findOne('orders', Order, { orderId: id });
+    if (!order) {
+      order = await dbHelper.findById('orders', Order, id);
+    }
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
