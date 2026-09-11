@@ -106,11 +106,19 @@ exports.getAllOrders = async (req, res) => {
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { orderStatus } = req.body;
-    const order = await dbHelper.findOne('orders', Order, { orderId: id });
+    const { orderStatus, status } = req.body;
+    const newStatus = orderStatus || status;
+
+    let order = await dbHelper.findOne('orders', Order, { orderId: id });
+    if (!order) {
+      order = await dbHelper.findById('orders', Order, id);
+    }
     if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
-    const updated = await dbHelper.findByIdAndUpdate('orders', Order, order._id || order.id, { orderStatus });
+    const updated = await dbHelper.findByIdAndUpdate('orders', Order, order._id || order.id, { 
+      orderStatus: newStatus,
+      paymentStatus: newStatus === 'Delivered' ? 'Paid' : order.paymentStatus
+    });
     res.json({ success: true, order: updated });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to update order status' });
@@ -134,7 +142,10 @@ exports.updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, technicianName } = req.body;
-    const booking = await dbHelper.findOne('bookings', Booking, { bookingId: id });
+    let booking = await dbHelper.findOne('bookings', Booking, { bookingId: id });
+    if (!booking) {
+      booking = await dbHelper.findById('bookings', Booking, id);
+    }
     if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
 
     const updated = await dbHelper.findByIdAndUpdate('bookings', Booking, booking._id || booking.id, {

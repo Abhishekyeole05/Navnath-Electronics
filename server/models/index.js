@@ -102,8 +102,8 @@ const orderSchema = new mongoose.Schema({
     state: String,
     pinCode: String
   },
-  paymentMethod: { type: String, enum: ['COD', 'Razorpay', 'UPI', 'Card'], default: 'COD' },
-  paymentStatus: { type: String, enum: ['Pending', 'Paid', 'Failed'], default: 'Pending' },
+  paymentMethod: { type: String, default: 'COD' },
+  paymentStatus: { type: String, default: 'Pending' },
   razorpayPaymentId: { type: String, default: null },
   razorpayOrderId: { type: String, default: null },
   orderStatus: { 

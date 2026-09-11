@@ -7,7 +7,7 @@ const serviceController = require('../controllers/serviceController');
 const orderController = require('../controllers/orderController');
 const paymentController = require('../controllers/paymentController');
 const adminController = require('../controllers/adminController');
-const { protect, adminOnly } = require('../middleware/authMiddleware');
+const { protect, adminOnly, optionalAuth } = require('../middleware/authMiddleware');
 
 // ==========================================
 // Authentication Routes
@@ -31,8 +31,8 @@ router.get('/categories', serviceController.getCategories);
 // Services & Bookings Routes
 // ==========================================
 router.get('/services', serviceController.getServices);
-router.post('/bookings', serviceController.bookService);
-router.post('/services/book', serviceController.bookService);
+router.post('/bookings', optionalAuth, serviceController.bookService);
+router.post('/services/book', optionalAuth, serviceController.bookService);
 router.get('/bookings/my-bookings', protect, serviceController.getUserBookings);
 router.get('/services/mybookings', protect, serviceController.getUserBookings);
 

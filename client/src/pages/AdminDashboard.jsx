@@ -360,45 +360,89 @@ const AdminDashboard = ({ onToast }) => {
             padding: '24px',
             boxShadow: 'var(--card-shadow)'
           }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-              {orders.map((ord) => (
-                <div key={ord._id || ord.id} style={{
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '16px'
-                }}>
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
-                      Order #{ord._id || ord.id} • ₹{(ord.totalPrice || 0).toLocaleString('en-IN')}
-                    </div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                      Customer: {ord.shippingAddress?.fullName} | Phone: {ord.shippingAddress?.phone}
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                      Address: {ord.shippingAddress?.street}, {ord.shippingAddress?.city}
-                    </div>
-                  </div>
+            {orders.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                No customer orders found in the database.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                {orders.map((ord) => {
+                  const orderCode = ord.orderId || ord._id || ord.id;
+                  const total = ord.totalAmount || ord.totalPrice || ord.subtotal || 0;
+                  const items = ord.items || ord.orderItems || [];
+                  const addr = ord.shippingAddress || {};
+                  const customerName = ord.customerName || addr.fullName || 'Customer';
+                  const mobile = ord.mobile || addr.phone || addr.mobile || 'N/A';
+                  const addressStr = addr.address || addr.street || `${addr.city || 'Nashik'}, ${addr.state || 'MH'}`;
+                  const currentStatus = ord.orderStatus || ord.status || 'Processing';
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <select
-                      value={ord.status || 'Processing'}
-                      onChange={(e) => handleUpdateOrderStatus(ord._id || ord.id, e.target.value)}
-                      className="form-select"
-                      style={{ width: 'auto', padding: '8px 12px', fontSize: '0.85rem' }}
-                    >
-                      <option value="Processing">Processing</option>
-                      <option value="Shipped">Shipped</option>
-                      <option value="Delivered">Delivered</option>
-                    </select>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  return (
+                    <div key={ord._id || ord.id} style={{
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '14px',
+                      backgroundColor: 'var(--bg-secondary)'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                        <div>
+                          <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-primary)' }}>
+                            Order #{orderCode} • <span style={{ color: 'var(--primary-blue)' }}>₹{total.toLocaleString('en-IN')}</span>
+                          </div>
+                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                            👤 <strong>{customerName}</strong> | 📞 {mobile} | ✉️ {ord.email || 'N/A'}
+                          </div>
+                          <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                            📍 Delivery: {addressStr}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Status:</span>
+                          <select
+                            value={currentStatus}
+                            onChange={(e) => handleUpdateOrderStatus(ord._id || ord.id, e.target.value)}
+                            className="form-select"
+                            style={{ width: 'auto', padding: '8px 12px', fontSize: '0.85rem', fontWeight: 700 }}
+                          >
+                            <option value="Processing">Processing</option>
+                            <option value="Out for Delivery">Out for Delivery</option>
+                            <option value="Shipped">Shipped</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Cancelled">Cancelled</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Items Row */}
+                      <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                        {items.map((item, idx) => (
+                          <div key={idx} style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            backgroundColor: 'var(--bg-card)',
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            border: '1px solid var(--border-color)',
+                            fontSize: '0.82rem'
+                          }}>
+                            {item.image && (
+                              <img src={item.image} alt="" style={{ width: '28px', height: '28px', objectFit: 'cover', borderRadius: '4px' }} />
+                            )}
+                            <span style={{ fontWeight: 600 }}>{item.name}</span>
+                            <span style={{ color: 'var(--text-secondary)' }}>× {item.quantity || item.qty}</span>
+                            <span style={{ fontWeight: 700, color: 'var(--primary-blue)' }}>₹{((item.price || 0) * (item.quantity || item.qty || 1)).toLocaleString('en-IN')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -411,45 +455,59 @@ const AdminDashboard = ({ onToast }) => {
             padding: '24px',
             boxShadow: 'var(--card-shadow)'
           }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-              {bookings.map((bk) => (
-                <div key={bk._id || bk.id} style={{
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '16px'
-                }}>
-                  <div>
-                    <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--primary-blue)' }}>
-                      {bk.serviceTitle}
+            {bookings.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                No electrician bookings found in the database.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                {bookings.map((bk) => (
+                  <div key={bk._id || bk.id} style={{
+                    border: '1px solid var(--border-color)',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '16px',
+                    backgroundColor: 'var(--bg-secondary)'
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: '1.08rem', color: 'var(--primary-blue)' }}>
+                        {bk.serviceName || bk.serviceTitle || 'Electrical Service Visit'} (#{bk.bookingId || bk._id})
+                      </div>
+                      <div style={{ fontSize: '0.88rem', color: 'var(--text-primary)', marginTop: '4px' }}>
+                        👤 Customer: <strong>{bk.name}</strong> | 📞 {bk.mobile || bk.phone}
+                      </div>
+                      <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                        📅 Date: {bk.preferredDate || bk.date} {bk.message ? `| 📝 ${bk.message}` : ''} | 📍 {bk.address}
+                      </div>
+                      {bk.technicianName && (
+                        <div style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: 600, marginTop: '4px' }}>
+                          👨‍🔧 Electrician: {bk.technicianName}
+                        </div>
+                      )}
                     </div>
-                    <div style={{ fontSize: '0.88rem', color: 'var(--text-primary)', marginTop: '4px' }}>
-                      Customer: {bk.name} ({bk.phone})
-                    </div>
-                    <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                      📅 {bk.date} | ⏰ {bk.timeSlot} | 📍 {bk.address}
-                    </div>
-                  </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <select
-                      value={bk.status || 'Pending'}
-                      onChange={(e) => handleUpdateBookingStatus(bk._id || bk.id, e.target.value)}
-                      className="form-select"
-                      style={{ width: 'auto', padding: '8px 12px', fontSize: '0.85rem' }}
-                    >
-                      <option value="Pending">Pending</option>
-                      <option value="Confirmed">Confirmed (Technician Assigned)</option>
-                      <option value="Completed">Completed</option>
-                    </select>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <select
+                        value={bk.status || 'Pending'}
+                        onChange={(e) => handleUpdateBookingStatus(bk._id || bk.id, e.target.value)}
+                        className="form-select"
+                        style={{ width: 'auto', padding: '8px 12px', fontSize: '0.85rem', fontWeight: 700 }}
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Technician Assigned">Technician Assigned</option>
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
