@@ -19,6 +19,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 const App = () => {
   const [toast, setToast] = useState({ message: '', type: 'success' });
@@ -48,7 +50,9 @@ const App = () => {
             <Route path="/order-success/:id" element={<OrderSuccess />} />
             <Route path="/contact" element={<Contact onToast={showToast} />} />
             <Route path="/login" element={<Login onToast={showToast} />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/register" element={<Register onToast={showToast} />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/dashboard" element={<UserDashboard onToast={showToast} />} />
             <Route path="/admin" element={<AdminDashboard onToast={showToast} />} />
           </Routes>

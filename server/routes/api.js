@@ -14,6 +14,8 @@ const { protect, adminOnly, optionalAuth } = require('../middleware/authMiddlewa
 // ==========================================
 router.post('/auth/register', authController.register);
 router.post('/auth/login', authController.login);
+router.post('/auth/forgot-password', authController.forgotPassword);
+router.post('/auth/reset-password/:token', authController.resetPassword);
 router.get('/auth/profile', protect, authController.getProfile);
 router.put('/auth/address', protect, authController.updateAddresses);
 router.post('/auth/wishlist', protect, authController.toggleWishlist);

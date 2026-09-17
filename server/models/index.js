@@ -6,9 +6,17 @@ const { getUseMemoryStore, memoryStore } = require('../config/db');
 // ==========================================
 
 const userSchema = new mongoose.Schema({
+
   name: { type: String, required: true },
+
   email: { type: String, required: true, unique: true },
+
   password: { type: String, required: true },
+
+  resetPasswordToken: { type: String, default: null },
+
+  resetPasswordExpires: { type: Date, default: null },
+
   phone: { type: String, default: '' },
   role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
   addresses: [{
