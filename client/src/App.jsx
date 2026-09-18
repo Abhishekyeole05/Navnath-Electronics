@@ -21,6 +21,10 @@ import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsConditions from './pages/TermsConditions';
+import ReturnRefund from './pages/ReturnRefund';
+import ShippingDelivery from './pages/ShippingDelivery';
 
 const App = () => {
   const [toast, setToast] = useState({ message: '', type: 'success' });
@@ -53,8 +57,13 @@ const App = () => {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/register" element={<Register onToast={showToast} />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-conditions" element={<TermsConditions />} />
+            <Route path="/return-refund" element={<ReturnRefund />} />
+            <Route path="/shipping-delivery" element={<ShippingDelivery />} />
             <Route path="/dashboard" element={<UserDashboard onToast={showToast} />} />
             <Route path="/admin" element={<AdminDashboard onToast={showToast} />} />
+            
           </Routes>
         </main>
 

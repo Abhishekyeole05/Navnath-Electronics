@@ -180,10 +180,15 @@ const Footer = () => {
           <div>
             © {new Date().getFullYear()} <strong>New Navnath Electronics & Electricals</strong>. All Rights Reserved.
           </div>
-          <div style={{ display: 'flex', gap: '20px' }}>
-            <span>🔒 SSL Secured Checkout</span>
-            <span>⚡ Genuine Warranty Guaranteed</span>
-          </div>
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+  <span>🔒 SSL Secured Checkout</span>
+  <span>⚡ Genuine Warranty Guaranteed</span>
+
+  <Link to="/privacy-policy">Privacy Policy</Link>
+  <Link to="/terms-conditions">Terms & Conditions</Link>
+  <Link to="/return-refund">Return & Refund</Link>
+  <Link to="/shipping-delivery">Shipping & Delivery</Link>
+</div>
         </div>
       </div>
     </footer>
