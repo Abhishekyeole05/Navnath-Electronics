@@ -122,7 +122,10 @@ const orderSchema = new mongoose.Schema({
   couponApplied: { type: String, default: null },
   discountAmount: { type: Number, default: 0 },
   subtotal: { type: Number, required: true },
+  itemsPrice: { type: Number },
   totalAmount: { type: Number, required: true },
+  totalPrice: { type: Number },
+  isPaid: { type: Boolean, default: false },
   paymentDetails: { type: mongoose.Schema.Types.Mixed, default: null }
 }, { timestamps: true });
 

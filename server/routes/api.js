@@ -50,11 +50,13 @@ router.put('/orders/:id/pay', orderController.updateOrderToPaid);
 router.post('/coupons/apply', orderController.applyCoupon);
 
 // ==========================================
-// Razorpay Payment Routes
+// Payment Routes (Razorpay & UPI QR)
 // ==========================================
+router.get('/payments/config', paymentController.getPaymentConfig);
 router.post('/payments/create-order', paymentController.createRazorpayOrder);
 router.post('/payments/razorpay-order', paymentController.createRazorpayOrder);
 router.post('/payments/verify', paymentController.verifyPayment);
+router.post('/payments/verify-upi', paymentController.verifyUpiPayment);
 
 
 // ==========================================

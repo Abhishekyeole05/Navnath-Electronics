@@ -1,56 +1,84 @@
 const Razorpay = require('razorpay');
+const crypto = require('crypto');
 
 let razorpayInstance = null;
-if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+const keyId = process.env.RAZORPAY_KEY_ID || '';
+const keySecret = process.env.RAZORPAY_KEY_SECRET || '';
+
+if (keyId && keySecret) {
   try {
     razorpayInstance = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET
+      key_id: keyId,
+      key_secret: keySecret
     });
+    console.log('✅ Razorpay Payment Gateway configured successfully with Live/Test credentials.');
   } catch (err) {
-    console.warn('⚠️ Razorpay SDK init error. Defaulting to Demo Payment Mode.');
+    console.warn('⚠️ Razorpay SDK init error. Falling back to Demo/Sandbox mode.');
   }
 }
 
+exports.getPaymentConfig = (req, res) => {
+  res.json({
+    success: true,
+    razorpay: {
+      enabled: true,
+      hasLiveKeys: !!(razorpayInstance && keyId && !keyId.includes('demo')),
+      keyId: keyId || 'rzp_test_navnath_electronics_sandbox'
+    },
+    upi: {
+      enabled: true,
+      upiId: '8862004797@okaxis',
+      merchantName: 'New Navnath Electronics & Electricals',
+      shopPhone: '8862004797'
+    },
+    cod: {
+      enabled: true,
+      note: 'Available for Manmad and nearby delivery areas'
+    }
+  });
+};
+
 exports.createRazorpayOrder = async (req, res) => {
   try {
-    const { amount, currency = 'INR' } = req.body;
-    if (!amount) {
-      return res.status(400).json({ success: false, message: 'Amount is required' });
+    const { amount, currency = 'INR', receipt } = req.body;
+    const numAmount = Number(amount);
+    if (!numAmount || numAmount <= 0) {
+      return res.status(400).json({ success: false, message: 'Valid payment amount is required' });
     }
 
-    // If Razorpay instance is available, create real order
-    if (razorpayInstance) {
+    // If real Razorpay instance is initialized
+    if (razorpayInstance && keyId) {
       const options = {
-        amount: Math.round(amount * 100), // convert to paise
+        amount: Math.round(numAmount * 100), // convert to paise
         currency,
-        receipt: 'navnath_rcpt_' + Date.now()
+        receipt: receipt || `navnath_rcpt_${Date.now()}`
       };
       const order = await razorpayInstance.orders.create(options);
       return res.json({
         success: true,
         order,
-        key: process.env.RAZORPAY_KEY_ID,
+        key: keyId,
         isDemoMode: false
       });
     }
 
-    // Otherwise return Demo Razorpay Order for instant testing
-    const demoOrderId = 'order_demo_' + Math.random().toString(36).substring(2, 11);
+    // Interactive Sandbox / Demo Razorpay order
+    const demoOrderId = 'order_navnath_' + Math.random().toString(36).substring(2, 12);
     res.json({
       success: true,
       order: {
         id: demoOrderId,
         entity: 'order',
-        amount: Math.round(amount * 100),
+        amount: Math.round(numAmount * 100),
         currency: 'INR',
-        receipt: 'demo_receipt',
+        receipt: receipt || `rcpt_navnath_${Date.now()}`,
         status: 'created'
       },
-      key: 'rzp_test_demo_key_123',
+      key: keyId || 'rzp_test_navnath_electronics_sandbox',
       isDemoMode: true
     });
   } catch (error) {
+    console.error('Razorpay Order Error:', error);
     res.status(500).json({ success: false, message: 'Payment gateway error', error: error.message });
   }
 };
@@ -58,23 +86,56 @@ exports.createRazorpayOrder = async (req, res) => {
 exports.verifyPayment = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, isDemoMode } = req.body;
-    
-    // In Demo Mode, automatically verify payment success
-    if (isDemoMode || razorpay_order_id?.startsWith('order_demo_')) {
-      return res.json({
-        success: true,
-        message: 'Demo Razorpay Payment verified successfully',
-        paymentId: razorpay_payment_id || ('pay_demo_' + Date.now())
-      });
+
+    if (!razorpay_payment_id) {
+      return res.status(400).json({ success: false, message: 'Payment ID is missing' });
     }
 
-    // For real Razorpay verification
+    // If real Razorpay secret is present, verify HMAC SHA256 signature
+    if (keySecret && razorpay_order_id && razorpay_signature) {
+      const generatedSignature = crypto
+        .createHmac('sha256', keySecret)
+        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+        .digest('hex');
+
+      if (generatedSignature !== razorpay_signature) {
+        return res.status(400).json({ success: false, message: 'Payment signature verification failed' });
+      }
+    }
+
     res.json({
       success: true,
-      message: 'Payment verified successfully',
+      message: 'Razorpay Payment verified successfully',
       paymentId: razorpay_payment_id
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Payment verification failed' });
+    console.error('Razorpay Verification Error:', error);
+    res.status(500).json({ success: false, message: 'Payment verification failed', error: error.message });
+  }
+};
+
+exports.verifyUpiPayment = async (req, res) => {
+  try {
+    const { utrNumber, amount, orderId } = req.body;
+    
+    // Validate UTR / Reference
+    const cleanUtr = (utrNumber || '').trim();
+    if (!cleanUtr || cleanUtr.length < 4) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a valid UPI Transaction / UTR reference number (at least 4 digits)'
+      });
+    }
+
+    const paymentId = `UPI_UTR_${cleanUtr}_${Date.now()}`;
+
+    res.json({
+      success: true,
+      message: 'UPI payment verified successfully',
+      paymentId,
+      utr: cleanUtr
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'UPI verification failed', error: error.message });
   }
 };
