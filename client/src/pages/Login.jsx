@@ -96,6 +96,19 @@ const Login = ({ onToast }) => {
                 placeholder="••••••••"
               />
             </div>
+            <div style={{ textAlign: 'right', marginTop: '-4px', marginBottom: '8px' }}>
+  <Link
+    to="/forgot-password"
+    style={{
+      color: 'var(--primary-blue)',
+      fontSize: '0.85rem',
+      fontWeight: 600,
+      textDecoration: 'none'
+    }}
+  >
+    Forgot Password?
+  </Link>
+</div>
 
             <button
               type="submit"

@@ -6,9 +6,17 @@ const { getUseMemoryStore, memoryStore } = require('../config/db');
 // ==========================================
 
 const userSchema = new mongoose.Schema({
+
   name: { type: String, required: true },
+
   email: { type: String, required: true, unique: true },
+
   password: { type: String, required: true },
+
+  resetPasswordToken: { type: String, default: null },
+
+  resetPasswordExpires: { type: Date, default: null },
+
   phone: { type: String, default: '' },
   role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
   addresses: [{
@@ -114,7 +122,10 @@ const orderSchema = new mongoose.Schema({
   couponApplied: { type: String, default: null },
   discountAmount: { type: Number, default: 0 },
   subtotal: { type: Number, required: true },
+  itemsPrice: { type: Number },
   totalAmount: { type: Number, required: true },
+  totalPrice: { type: Number },
+  isPaid: { type: Boolean, default: false },
   paymentDetails: { type: mongoose.Schema.Types.Mixed, default: null }
 }, { timestamps: true });
 

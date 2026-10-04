@@ -9,7 +9,7 @@ exports.getDashboardStats = async (req, res) => {
     const bookings = await dbHelper.find('bookings', Booking);
 
     // Calculate revenue
-    const totalRevenue = orders.reduce((sum, ord) => sum + (ord.totalAmount || 0), 0);
+    const totalRevenue = orders.reduce((sum, ord) => sum + Number(ord.totalAmount || ord.totalPrice || ord.subtotal || 0), 0);
     const totalOrders = orders.length;
     const totalCustomers = users.filter(u => u.role === 'customer').length;
     const totalProducts = products.length;

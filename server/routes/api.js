@@ -14,6 +14,8 @@ const { protect, adminOnly, optionalAuth } = require('../middleware/authMiddlewa
 // ==========================================
 router.post('/auth/register', authController.register);
 router.post('/auth/login', authController.login);
+router.post('/auth/forgot-password', authController.forgotPassword);
+router.post('/auth/reset-password/:token', authController.resetPassword);
 router.get('/auth/profile', protect, authController.getProfile);
 router.put('/auth/address', protect, authController.updateAddresses);
 router.post('/auth/wishlist', protect, authController.toggleWishlist);
@@ -48,11 +50,13 @@ router.put('/orders/:id/pay', orderController.updateOrderToPaid);
 router.post('/coupons/apply', orderController.applyCoupon);
 
 // ==========================================
-// Razorpay Payment Routes
+// Payment Routes (Razorpay & UPI QR)
 // ==========================================
+router.get('/payments/config', paymentController.getPaymentConfig);
 router.post('/payments/create-order', paymentController.createRazorpayOrder);
 router.post('/payments/razorpay-order', paymentController.createRazorpayOrder);
 router.post('/payments/verify', paymentController.verifyPayment);
+router.post('/payments/verify-upi', paymentController.verifyUpiPayment);
 
 
 // ==========================================
