@@ -9,6 +9,7 @@ server/node_modules/
 .env.*.local
 server/.env
 client/.env
+server/data/
 
 # Logs
 npm-debug.log*

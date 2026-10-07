@@ -1,28 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Register = ({ onToast }) => {
-  const { register } = useAuth();
+  const { user, register } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate(user.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  if (user) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !email || !password) return;
     setLoading(true);
+    setError('');
     const result = await register(name, email, password, phone);
     setLoading(false);
     if (result.success) {
       if (onToast) onToast('Account created successfully!', 'success');
       navigate('/dashboard');
     } else {
-      if (onToast) onToast(result.message || 'Registration failed', 'error');
+      const errorMsg = result.message || 'Registration failed. Please try again.';
+      setError(errorMsg);
+      if (onToast) onToast(errorMsg, 'error');
     }
   };
 
@@ -47,6 +59,25 @@ const Register = ({ onToast }) => {
               Get faster checkout, track orders, and book home electrician service.
             </p>
           </div>
+
+          {error && (
+            <div style={{
+              backgroundColor: '#FEF2F2',
+              border: '1px solid #FCA5A5',
+              color: '#991B1B',
+              borderRadius: '10px',
+              padding: '12px 16px',
+              marginBottom: '20px',
+              fontSize: '0.88rem',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <span>⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">

@@ -1,6 +1,12 @@
+const fs = require('fs');
+const path = require('path');
+
+const DATA_DIR = path.join(__dirname, '..', 'data');
+const DB_FILE = path.join(DATA_DIR, 'dev_store.json');
+
 /**
- * In-Memory Fallback Datastore for New Navnath Electronics & Electricals
- * Ensures zero-configuration demo & development testing without requiring MongoDB Atlas immediately.
+ * Persistent In-Memory Datastore for New Navnath Electronics & Electricals
+ * Persists data to server/data/dev_store.json so user accounts & orders survive server restarts.
  */
 class MemoryStore {
   constructor() {
@@ -13,6 +19,57 @@ class MemoryStore {
     this.coupons = [];
     this.reviews = [];
     this.isSeeded = false;
+
+    this.loadFromDisk();
+  }
+
+  loadFromDisk() {
+    try {
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+      if (fs.existsSync(DB_FILE)) {
+        const raw = fs.readFileSync(DB_FILE, 'utf8');
+        if (raw) {
+          const data = JSON.parse(raw);
+          this.users = data.users || [];
+          this.products = data.products || [];
+          this.categories = data.categories || [];
+          this.services = data.services || [];
+          this.bookings = data.bookings || [];
+          this.orders = data.orders || [];
+          this.coupons = data.coupons || [];
+          this.reviews = data.reviews || [];
+          if (this.users.length > 0 || this.products.length > 0) {
+            this.isSeeded = true;
+          }
+          console.log(`🗄️ [Local Database] Loaded ${this.users.length} users and ${this.products.length} products from persistent disk storage.`);
+        }
+      }
+    } catch (err) {
+      console.warn('⚠️ Could not load dev_store.json from disk:', err.message);
+    }
+  }
+
+  saveToDisk() {
+    try {
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+      const data = {
+        users: this.users,
+        products: this.products,
+        categories: this.categories,
+        services: this.services,
+        bookings: this.bookings,
+        orders: this.orders,
+        coupons: this.coupons,
+        reviews: this.reviews
+      };
+      fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
+    } catch (err) {
+      console.warn('⚠️ Could not save dev_store.json to disk:', err.message);
+    }
   }
 
   // Generic helper to generate unique string ID
@@ -61,6 +118,7 @@ class MemoryStore {
       ...data
     };
     list.push(doc);
+    this.saveToDisk();
     return doc;
   }
 
@@ -74,6 +132,7 @@ class MemoryStore {
       updatedAt: new Date().toISOString()
     };
     list[idx] = updated;
+    this.saveToDisk();
     return updated;
   }
 
@@ -83,6 +142,7 @@ class MemoryStore {
     if (idx === -1) return null;
     const deleted = list[idx];
     list.splice(idx, 1);
+    this.saveToDisk();
     return deleted;
   }
 
@@ -96,6 +156,7 @@ class MemoryStore {
     this.coupons = [];
     this.reviews = [];
     this.isSeeded = false;
+    this.saveToDisk();
   }
 }
 

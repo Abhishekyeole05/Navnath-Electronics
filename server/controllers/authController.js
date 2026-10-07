@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { User, dbHelper } = require('../models');
@@ -23,20 +24,25 @@ const generateToken = (user) => {
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body;
+    let { name, email, password, phone } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Please provide name, email, and password.' });
     }
+
+    email = email.trim().toLowerCase();
 
     const existingUser = await dbHelper.findOne('users', User, { email });
     if (existingUser) {
       return res.status(400).json({ success: false, message: 'User with this email already exists.' });
     }
 
+    // Hash password before storing
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const newUser = await dbHelper.create('users', User, {
       name,
       email,
-      password, // Note: In production, hash with bcrypt
+      password: hashedPassword,
       phone: phone || '',
       role: 'customer',
       addresses: [],
@@ -64,14 +70,36 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Please provide email and password.' });
     }
 
+    email = email.trim().toLowerCase();
+
     const user = await dbHelper.findOne('users', User, { email });
-    if (!user || user.password !== password) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password. Try admin@navnath.com / admin123' });
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+    }
+
+    // Try bcrypt compare first (hashed passwords)
+    let isMatch = false;
+    const looksHashed = user.password && user.password.startsWith('$2');
+
+    if (looksHashed) {
+      isMatch = await bcrypt.compare(password, user.password);
+    } else {
+      // Legacy plaintext password — compare directly
+      isMatch = (user.password === password);
+      if (isMatch) {
+        // Auto-rehash the legacy plaintext password on successful login
+        const rehashed = await bcrypt.hash(password, 10);
+        await dbHelper.findByIdAndUpdate('users', User, user._id || user.id, { password: rehashed });
+      }
+    }
+
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
 
     const token = generateToken(user);
@@ -151,7 +179,7 @@ exports.toggleWishlist = async (req, res) => {
 
 exports.forgotPassword = async (req, res) => {
   try {
-    const { email } = req.body;
+    let { email } = req.body;
 
     if (!email) {
       return res.status(400).json({
@@ -159,6 +187,8 @@ exports.forgotPassword = async (req, res) => {
         message: 'Please provide your email address.'
       });
     }
+
+    email = email.trim().toLowerCase();
 
     const user = await dbHelper.findOne('users', User, { email });
 
@@ -170,7 +200,6 @@ exports.forgotPassword = async (req, res) => {
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
-
     const resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
 
     await dbHelper.findByIdAndUpdate(
@@ -183,62 +212,76 @@ exports.forgotPassword = async (req, res) => {
       }
     );
 
-    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+    const origin = req.headers.origin || process.env.FRONTEND_URL || 'http://localhost:5174';
+    const resetLink = `${origin}/reset-password/${resetToken}`;
 
-    await emailTransporter.sendMail({
-      from: `"Navnath Electronics" <${process.env.EMAIL_USER}>`,
-      to: user.email,
-      subject: 'Password Reset - Navnath Electronics',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
-          <h2>Password Reset Request</h2>
+    const emailUser = process.env.EMAIL_USER || 'abhishekyeole9975@gmail.com';
+    const emailPass = process.env.EMAIL_PASS;
 
-          <p>Hello ${user.name},</p>
+    if (!emailPass || !emailPass.trim()) {
+      console.warn('⚠️ EMAIL_PASS (Gmail App Password) missing in server/.env');
+      return res.status(400).json({
+        success: false,
+        message: 'Gmail App Password (EMAIL_PASS) is missing in server/.env. Please paste your 16-character Gmail App Password into server/.env to send real emails to your Gmail inbox.'
+      });
+    }
 
-          <p>
-            We received a request to reset your password for your
-            Navnath Electronics account.
-          </p>
+    try {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: emailUser,
+          pass: emailPass.trim()
+        }
+      });
 
-          <p>Click the button below to reset your password:</p>
+      await transporter.sendMail({
+        from: `"New Navnath Electricals" <${emailUser}>`,
+        to: user.email,
+        subject: '🔑 Password Reset Request - New Navnath Electricals',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <h2 style="color: #0b3d91; margin: 0;">NEW NAVNATH</h2>
+              <p style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">Electronics & Electricals — Manmad</p>
+            </div>
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+            <h3 style="color: #1e293b;">Password Reset Request</h3>
+            <p style="color: #334155; font-size: 0.95rem; line-height: 1.5;">Hello <strong>${user.name}</strong>,</p>
+            <p style="color: #334155; font-size: 0.95rem; line-height: 1.5;">We received a request to reset your password for your account (<strong>${user.email}</strong>).</p>
+            <p style="color: #334155; font-size: 0.95rem; line-height: 1.5;">Click the secure button below to create your new password:</p>
+            <div style="text-align: center; margin: 28px 0;">
+              <a href="${resetLink}" style="display: inline-block; padding: 14px 28px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">
+                🔒 Reset My Password Now
+              </a>
+            </div>
+            <p style="color: #64748b; font-size: 0.85rem;">This link is secure and will expire in <strong>15 minutes</strong>.</p>
+            <p style="color: #64748b; font-size: 0.85rem;">If you did not request a password reset, you can safely ignore this email.</p>
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0 16px;" />
+            <p style="color: #94a3b8; font-size: 0.78rem; text-align: center;">New Navnath Electronics & Electricals, Opposite Bus Stand, Manmad, Maharashtra 423104</p>
+          </div>
+        `
+      });
 
-          <a href="${resetLink}"
-             style="
-               display: inline-block;
-               padding: 12px 20px;
-               background: #2563eb;
-               color: white;
-               text-decoration: none;
-               border-radius: 6px;
-             ">
-            Reset Password
-          </a>
+      console.log(`📧 [Gmail Sent] Reset email successfully delivered to ${user.email}`);
 
-          <p style="margin-top: 20px;">
-            This link will expire in <strong>15 minutes</strong>.
-          </p>
-
-          <p>
-            If you did not request a password reset, you can safely ignore
-            this email.
-          </p>
-
-          <p>Regards,<br>Navnath Electronics Team</p>
-        </div>
-      `
-    });
-
-    res.json({
-      success: true,
-      message: 'Password reset link has been sent to your email.'
-    });
+      return res.json({
+        success: true,
+        message: `Password reset email sent to ${user.email}. Please check your Gmail inbox!`
+      });
+    } catch (mailError) {
+      console.error('❌ Gmail SMTP Email delivery error:', mailError.message);
+      return res.status(400).json({
+        success: false,
+        message: `Gmail delivery failed: ${mailError.message}. Please check your 16-character App Password in server/.env.`
+      });
+    }
 
   } catch (error) {
     console.error('Forgot password error:', error);
-
     res.status(500).json({
       success: false,
-      message: 'Unable to send password reset email.',
+      message: 'Unable to process password reset request.',
       error: error.message
     });
   }
@@ -284,12 +327,15 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
+    // Hash the new password before saving
+    const hashedNewPassword = await bcrypt.hash(password, 10);
+
     await dbHelper.findByIdAndUpdate(
       'users',
       User,
       user._id || user.id,
       {
-        password: password,
+        password: hashedNewPassword,
         resetPasswordToken: null,
         resetPasswordExpires: null
       }

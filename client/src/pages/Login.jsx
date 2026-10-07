@@ -1,51 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FiMail, FiLock, FiLogOut, FiZap, FiArrowRight, FiCheckCircle } from 'react-icons/fi';
 
 const Login = ({ onToast }) => {
-  const { login, loginAsDemoAdmin, loginAsDemoCustomer } = useAuth();
+  const { user, login, loginAsDemoAdmin, loginAsDemoCustomer } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate(user.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  if (user) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) return;
     setLoading(true);
+    setError('');
     const result = await login(email, password);
     setLoading(false);
     if (result.success) {
       if (onToast) onToast('Signed in successfully!', 'success');
       navigate('/dashboard');
     } else {
-      if (onToast) onToast(result.message || 'Login failed. Please check credentials.', 'error');
+      const errorMsg = result.message || 'Invalid email or password. Please check your credentials.';
+      setError(errorMsg);
+      if (onToast) onToast(errorMsg, 'error');
     }
   };
 
   const handleDemoAdmin = async () => {
     setLoading(true);
+    setError('');
     const result = await loginAsDemoAdmin();
     setLoading(false);
     if (result.success) {
       if (onToast) onToast('Welcome, Administrator!', 'success');
       navigate('/admin');
     } else {
-      if (onToast) onToast('Demo admin sign in failed', 'error');
+      const errorMsg = result.message || 'Demo admin sign in failed';
+      setError(errorMsg);
+      if (onToast) onToast(errorMsg, 'error');
     }
   };
 
   const handleDemoCustomer = async () => {
     setLoading(true);
+    setError('');
     const result = await loginAsDemoCustomer();
     setLoading(false);
     if (result.success) {
       if (onToast) onToast('Welcome to New Navnath Electricals!', 'success');
       navigate('/dashboard');
     } else {
-      if (onToast) onToast('Demo customer sign in failed', 'error');
+      const errorMsg = result.message || 'Demo customer sign in failed';
+      setError(errorMsg);
+      if (onToast) onToast(errorMsg, 'error');
     }
   };
 
@@ -70,6 +88,25 @@ const Login = ({ onToast }) => {
               Track electrical orders, save addresses, and book home electrician visits.
             </p>
           </div>
+
+          {error && (
+            <div style={{
+              backgroundColor: '#FEF2F2',
+              border: '1px solid #FCA5A5',
+              color: '#991B1B',
+              borderRadius: '10px',
+              padding: '12px 16px',
+              marginBottom: '20px',
+              fontSize: '0.88rem',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <span>⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit}>

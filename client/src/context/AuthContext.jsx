@@ -37,23 +37,41 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
-    const res = await axios.post('/api/auth/login', { email, password });
-    if (res.data.success) {
-      setToken(res.data.token);
-      setUser(res.data.user);
-      return { success: true };
+    try {
+      const res = await axios.post('/api/auth/login', { 
+        email: email ? email.trim().toLowerCase() : '', 
+        password 
+      });
+      if (res.data.success) {
+        setToken(res.data.token);
+        setUser(res.data.user);
+        return { success: true };
+      }
+      return { success: false, message: res.data.message || 'Login failed' };
+    } catch (err) {
+      const message = err.response?.data?.message || 'Invalid email or password. Please try again.';
+      return { success: false, message };
     }
-    return { success: false, message: 'Login failed' };
   };
 
   const register = async (name, email, password, phone) => {
-    const res = await axios.post('/api/auth/register', { name, email, password, phone });
-    if (res.data.success) {
-      setToken(res.data.token);
-      setUser(res.data.user);
-      return { success: true };
+    try {
+      const res = await axios.post('/api/auth/register', { 
+        name, 
+        email: email ? email.trim().toLowerCase() : '', 
+        password, 
+        phone 
+      });
+      if (res.data.success) {
+        setToken(res.data.token);
+        setUser(res.data.user);
+        return { success: true };
+      }
+      return { success: false, message: res.data.message || 'Registration failed' };
+    } catch (err) {
+      const message = err.response?.data?.message || 'Registration failed. Please check your details.';
+      return { success: false, message };
     }
-    return { success: false, message: 'Registration failed' };
   };
 
   const logout = () => {

@@ -21,27 +21,22 @@ const ForgotPassword = () => {
     try {
       setLoading(true);
 
-      const response = await fetch(
-        'http://localhost:5000/api/auth/forgot-password',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ email })
-        }
-      );
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      });
 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        setError(data.message || 'Unable to send reset link.');
+        setError(data.message || 'Unable to send reset email.');
         return;
       }
 
-      setMessage(
-        'Password reset link has been sent to your email.'
-      );
+      setMessage(data.message || 'A password reset link has been sent to your email address. Please check your inbox.');
 
     } catch (err) {
       setError('Unable to connect to the server.');
@@ -119,7 +114,7 @@ const ForgotPassword = () => {
           )}
 
           {message && (
-            <p style={{ color: 'green', marginBottom: '15px' }}>
+            <p style={{ color: 'green', marginBottom: '15px', fontWeight: '600', lineHeight: '1.5' }}>
               {message}
             </p>
           )}

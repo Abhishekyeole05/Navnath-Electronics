@@ -2,6 +2,7 @@ const {
   User, Product, Category, Service, Booking, Order, Coupon, Review, dbHelper 
 } = require('../models');
 const { getUseMemoryStore, memoryStore } = require('../config/db');
+const bcrypt = require('bcryptjs');
 
 const initialCategories = [
   {
@@ -522,13 +523,14 @@ const seedDatabase = async () => {
       }
     }
 
-    // 5. Seed Demo Users (Admin & Customer)
+    // 5. Seed Demo Users (Admin & Customer) — passwords are bcrypt-hashed
     const adminExists = await dbHelper.findOne('users', User, { email: 'admin@navnath.com' });
     if (!adminExists) {
+      const adminHash = await bcrypt.hash('admin123', 10);
       await dbHelper.create('users', User, {
         name: 'Navnath Admin (Store Manager)',
         email: 'admin@navnath.com',
-        password: 'admin123', // Plain for demo ease
+        password: adminHash,
         phone: '+91 9876543210',
         role: 'admin',
         addresses: [{
@@ -546,10 +548,11 @@ const seedDatabase = async () => {
 
     const userExists = await dbHelper.findOne('users', User, { email: 'user@navnath.com' });
     if (!userExists) {
+      const userHash = await bcrypt.hash('user123', 10);
       await dbHelper.create('users', User, {
         name: 'Omkesh Bhamare',
         email: 'user@navnath.com',
-        password: 'user123',
+        password: userHash,
         phone: '+91 9123456789',
         role: 'customer',
         addresses: [{

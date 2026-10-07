@@ -182,22 +182,20 @@ const Navbar = () => {
           gap: '20px'
         }}>
           {/* Brand Logo */}
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, var(--primary-blue), var(--accent-yellow))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFFFFF',
-              fontSize: '1.4rem',
-              fontWeight: 800,
-              boxShadow: '0 4px 10px rgba(11, 61, 145, 0.25)'
-            }}>
-              N
-            </div>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <img 
+              src="/logo.png" 
+              alt="New Navnath Electronics & Electricals" 
+              style={{
+                height: '48px',
+                width: '48px',
+                objectFit: 'contain',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(11, 61, 145, 0.15)',
+                backgroundColor: '#FFFFFF',
+                padding: '2px'
+              }} 
+            />
             <div>
               <div style={{
                 fontFamily: 'var(--font-heading)',

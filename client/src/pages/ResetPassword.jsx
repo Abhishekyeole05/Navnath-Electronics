@@ -35,16 +35,13 @@ const ResetPassword = () => {
     try {
       setLoading(true);
 
-      const response = await fetch(
-        `http://localhost:5000/api/auth/reset-password/${token}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ password })
-        }
-      );
+      const response = await fetch(`/api/auth/reset-password/${token}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password })
+      });
 
       const data = await response.json();
 
