@@ -81,3 +81,20 @@ exports.getUserBookings = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to fetch user bookings' });
   }
 };
+
+exports.handleContactInquiry = async (req, res) => {
+  try {
+    const { name, phone, email, subject, message } = req.body;
+    if (!name || !phone || !message) {
+      return res.status(400).json({ success: false, message: 'Name, phone, and message are required.' });
+    }
+    const inquiryId = 'INQ-' + Date.now().toString().slice(-6);
+    res.status(201).json({
+      success: true,
+      message: 'Inquiry received successfully! Our store manager will contact you shortly.',
+      inquiry: { inquiryId, name, phone, email, subject, message, createdAt: new Date() }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to record inquiry' });
+  }
+};

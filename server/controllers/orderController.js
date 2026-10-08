@@ -49,6 +49,24 @@ exports.createOrder = async (req, res) => {
     const finalDiscount = Number(discountAmount || 0);
     const finalTotal = Math.max(0, Number(totalAmount || totalPrice || (finalSubtotal - finalDiscount)));
     
+    // Stock Verification & Auto-Deduction
+    for (const item of normalizedItems) {
+      if (item.productId) {
+        const prod = await dbHelper.findById('products', Product, item.productId);
+        if (prod) {
+          if (prod.stock < item.quantity) {
+            return res.status(400).json({
+              success: false,
+              message: `Insufficient stock for "${prod.name}". Only ${prod.stock} units available.`
+            });
+          }
+          await dbHelper.findByIdAndUpdate('products', Product, item.productId, {
+            stock: Math.max(0, prod.stock - item.quantity)
+          });
+        }
+      }
+    }
+
     const orderId = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
 
     let normPaymentMethod = 'Cash on Delivery';

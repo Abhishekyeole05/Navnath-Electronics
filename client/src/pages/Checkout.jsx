@@ -15,13 +15,26 @@ const Checkout = ({ onToast }) => {
   const navigate = useNavigate();
 
   const [shippingAddress, setShippingAddress] = useState({
-    fullName: user ? user.name : 'Sanjay Patil',
-    phone: user ? user.phone || '8862004797' : '8862004797',
-    street: 'Opposite Bus Stand, Main Market Road',
-    city: 'Manmad',
-    state: 'Maharashtra',
-    postalCode: '422001'
+    fullName: user ? user.name : '',
+    phone: user ? (user.phone || '') : '',
+    street: user && user.address ? (typeof user.address === 'object' ? user.address.street : user.address) : '',
+    city: user && user.address && typeof user.address === 'object' ? user.address.city : 'Manmad',
+    state: user && user.address && typeof user.address === 'object' ? user.address.state : 'Maharashtra',
+    postalCode: user && user.address && typeof user.address === 'object' ? user.address.postalCode : '422001'
   });
+
+  useEffect(() => {
+    if (user) {
+      setShippingAddress(prev => ({
+        fullName: user.name || prev.fullName,
+        phone: user.phone || prev.phone,
+        street: user.address ? (typeof user.address === 'object' ? user.address.street : user.address) : prev.street,
+        city: (user.address && typeof user.address === 'object' && user.address.city) || prev.city,
+        state: (user.address && typeof user.address === 'object' && user.address.state) || prev.state,
+        postalCode: (user.address && typeof user.address === 'object' && user.address.postalCode) || prev.postalCode
+      }));
+    }
+  }, [user]);
 
   const [paymentMethod, setPaymentMethod] = useState('upi_qr'); // 'upi_qr' | 'razorpay' | 'cod' | 'demo'
   const [processing, setProcessing] = useState(false);

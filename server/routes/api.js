@@ -48,6 +48,7 @@ router.get('/orders/:id', orderController.getOrderById);
 router.put('/orders/:id/cancel', protect, orderController.cancelOrder);
 router.put('/orders/:id/pay', orderController.updateOrderToPaid);
 router.post('/coupons/apply', orderController.applyCoupon);
+router.post('/contact', serviceController.handleContactInquiry);
 
 // ==========================================
 // Payment Routes (Razorpay & UPI QR)

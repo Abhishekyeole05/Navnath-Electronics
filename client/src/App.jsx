@@ -26,6 +26,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
 import ReturnRefund from './pages/ReturnRefund';
 import ShippingDelivery from './pages/ShippingDelivery';
+import NotFound from './pages/NotFound';
 
 const App = () => {
   const [toast, setToast] = useState({ message: '', type: 'success' });
@@ -65,7 +66,7 @@ const App = () => {
             <Route path="/shipping-delivery" element={<ShippingDelivery />} />
             <Route path="/dashboard" element={<UserDashboard onToast={showToast} />} />
             <Route path="/admin" element={<AdminDashboard onToast={showToast} />} />
-            
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
 

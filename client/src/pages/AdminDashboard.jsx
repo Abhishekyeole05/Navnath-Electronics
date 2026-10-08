@@ -37,7 +37,24 @@ const AdminDashboard = ({ onToast }) => {
     description: '',
     image: ''
   });
+  const [editingProduct, setEditingProduct] = useState(null);
   const [submittingProd, setSubmittingProd] = useState(false);
+
+  const handleUpdateProduct = async (e) => {
+    e.preventDefault();
+    if (!editingProduct || !editingProduct.name || !editingProduct.price) return;
+    try {
+      const pId = editingProduct._id || editingProduct.id;
+      const res = await axios.put(`/api/admin/products/${pId}`, editingProduct);
+      if (res.data.success) {
+        setProducts(prev => prev.map(p => (p._id || p.id) === pId ? res.data.product : p));
+        setEditingProduct(null);
+        if (onToast) onToast('Product updated successfully!', 'success');
+      }
+    } catch (err) {
+      if (onToast) onToast('Failed to update product', 'error');
+    }
+  };
 
   // Coupon State
   const [isAddCouponModalOpen, setIsAddCouponModalOpen] = useState(false);
@@ -417,6 +434,13 @@ const AdminDashboard = ({ onToast }) => {
                       )}
                     </td>
                     <td style={{ padding: '14px 12px', textAlign: 'right' }}>
+                      <button
+                        onClick={() => setEditingProduct(prod)}
+                        className="btn btn-outline btn-sm"
+                        style={{ padding: '6px 12px', marginRight: '8px' }}
+                      >
+                        <FiEdit2 /> Edit
+                      </button>
                       <button
                         onClick={() => handleDeleteProduct(prod._id || prod.id)}
                         className="btn btn-outline btn-sm"
@@ -892,6 +916,108 @@ const AdminDashboard = ({ onToast }) => {
                   style={{ width: '100%', marginTop: '10px' }}
                 >
                   Create Coupon Code
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Product Modal */}
+        {editingProduct && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.65)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            padding: '20px'
+          }}>
+            <div style={{
+              backgroundColor: 'var(--bg-card)',
+              borderRadius: '20px',
+              border: '1px solid var(--border-color)',
+              maxWidth: '520px',
+              width: '100%',
+              padding: '32px',
+              boxShadow: '0 25px 50px rgba(0,0,0,0.3)',
+              position: 'relative'
+            }}>
+              <button
+                onClick={() => setEditingProduct(null)}
+                style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                <FiX />
+              </button>
+
+              <h2 style={{ fontSize: '1.4rem', marginBottom: '20px', color: 'var(--text-primary)' }}>Edit Product</h2>
+
+              <form onSubmit={handleUpdateProduct}>
+                <div className="form-group">
+                  <label className="form-label">Product Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingProduct.name || ''}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Brand</label>
+                    <input
+                      type="text"
+                      value={editingProduct.brand || ''}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, brand: e.target.value })}
+                      className="form-input"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Stock Quantity *</label>
+                    <input
+                      type="number"
+                      required
+                      value={editingProduct.stock || 0}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, stock: Number(e.target.value) })}
+                      className="form-input"
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Selling Price (₹) *</label>
+                    <input
+                      type="number"
+                      required
+                      value={editingProduct.price || ''}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, price: Number(e.target.value) })}
+                      className="form-input"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Original MRP (₹)</label>
+                    <input
+                      type="number"
+                      value={editingProduct.originalPrice || ''}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, originalPrice: Number(e.target.value) })}
+                      className="form-input"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ width: '100%', marginTop: '10px' }}
+                >
+                  Save Changes
                 </button>
               </form>
             </div>
