@@ -22,6 +22,7 @@ const AdminDashboard = ({ onToast }) => {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [bookings, setBookings] = useState([]);
+  const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // New Product Modal State
@@ -38,6 +39,16 @@ const AdminDashboard = ({ onToast }) => {
   });
   const [submittingProd, setSubmittingProd] = useState(false);
 
+  // Coupon State
+  const [isAddCouponModalOpen, setIsAddCouponModalOpen] = useState(false);
+  const [newCoupon, setNewCoupon] = useState({
+    code: '',
+    discountPercent: 10,
+    maxDiscount: 500,
+    minOrderValue: 500,
+    isActive: true
+  });
+
   useEffect(() => {
     if (!user || user.role !== 'admin') {
       navigate('/');
@@ -49,21 +60,69 @@ const AdminDashboard = ({ onToast }) => {
   const fetchAdminData = async () => {
     setLoading(true);
     try {
-      const [prodRes, ordRes, bookRes, kpiRes] = await Promise.all([
+      const [prodRes, ordRes, bookRes, coupRes, kpiRes] = await Promise.all([
         axios.get('/api/products').catch(() => ({ data: { success: false, products: [] } })),
         axios.get('/api/admin/orders').catch(() => ({ data: { success: false, orders: [] } })),
         axios.get('/api/admin/bookings').catch(() => ({ data: { success: false, bookings: [] } })),
+        axios.get('/api/admin/coupons').catch(() => ({ data: { success: false, coupons: [] } })),
         axios.get('/api/admin/stats').catch(() => ({ data: { success: false, stats: null } }))
       ]);
 
       if (prodRes.data.success) setProducts(prodRes.data.products);
       if (ordRes.data.success) setOrders(ordRes.data.orders);
       if (bookRes.data.success) setBookings(bookRes.data.bookings);
+      if (coupRes.data.success) setCoupons(coupRes.data.coupons || []);
       if (kpiRes.data.success && kpiRes.data.stats) setStats(kpiRes.data.stats);
     } catch (err) {
       console.warn('Failed to sync admin data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const exportOrdersCSV = () => {
+    if (orders.length === 0) {
+      if (onToast) onToast('No orders to export', 'warning');
+      return;
+    }
+    const headers = ['Order ID', 'Customer Name', 'Mobile', 'Amount', 'Payment Method', 'Payment Status', 'Order Status', 'Date'];
+    const rows = orders.map(ord => [
+      ord.orderId || ord._id,
+      `"${ord.customerName || ord.shippingAddress?.fullName || 'Customer'}"`,
+      `"${ord.mobile || ord.shippingAddress?.phone || ''}"`,
+      ord.totalAmount || ord.totalPrice || 0,
+      `"${ord.paymentMethod || 'COD'}"`,
+      `"${ord.paymentStatus || 'Pending'}"`,
+      `"${ord.orderStatus || ord.status || 'Processing'}"`,
+      `"${new Date(ord.createdAt || Date.now()).toLocaleDateString('en-IN')}"`
+    ]);
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `navnath_orders_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    if (onToast) onToast('Orders CSV exported successfully!', 'success');
+  };
+
+  const handleCreateCoupon = async (e) => {
+    e.preventDefault();
+    if (!newCoupon.code.trim()) {
+      if (onToast) onToast('Please enter coupon code', 'warning');
+      return;
+    }
+    try {
+      const res = await axios.post('/api/admin/coupons', newCoupon);
+      if (res.data.success) {
+        setCoupons([res.data.coupon, ...coupons]);
+        setIsAddCouponModalOpen(false);
+        setNewCoupon({ code: '', discountPercent: 10, maxDiscount: 500, minOrderValue: 500, isActive: true });
+        if (onToast) onToast(`Coupon "${res.data.coupon.code}" created!`, 'success');
+      }
+    } catch (err) {
+      if (onToast) onToast('Failed to create coupon', 'error');
     }
   };
 
@@ -116,10 +175,10 @@ const AdminDashboard = ({ onToast }) => {
     }
   };
 
-  const handleUpdateBookingStatus = async (bookingId, newStatus) => {
+  const handleUpdateBookingStatus = async (bookingId, newStatus, technicianName) => {
     try {
-      await axios.put(`/api/admin/bookings/${bookingId}/status`, { status: newStatus });
-      setBookings(prev => prev.map(b => (b._id || b.id) === bookingId ? { ...b, status: newStatus } : b));
+      await axios.put(`/api/admin/bookings/${bookingId}/status`, { status: newStatus, technicianName });
+      setBookings(prev => prev.map(b => (b._id || b.id) === bookingId ? { ...b, status: newStatus, technicianName: technicianName || b.technicianName } : b));
       if (onToast) onToast(`Booking updated to ${newStatus}`, 'success');
     } catch (err) {
       if (onToast) onToast('Failed to update booking', 'error');
@@ -297,6 +356,22 @@ const AdminDashboard = ({ onToast }) => {
           >
             ⚡ Electrician Visits ({bookings.length})
           </button>
+
+          <button
+            onClick={() => setActiveTab('coupons')}
+            style={{
+              padding: '12px 24px',
+              border: 'none',
+              background: 'none',
+              fontWeight: 700,
+              fontSize: '1rem',
+              color: activeTab === 'coupons' ? 'var(--primary-blue)' : 'var(--text-secondary)',
+              borderBottom: activeTab === 'coupons' ? '3px solid var(--primary-blue)' : '3px solid transparent',
+              cursor: 'pointer'
+            }}
+          >
+            🎟️ Promo Coupons ({coupons.length})
+          </button>
         </div>
 
         {/* 3. TAB 1: MANAGE PRODUCTS */}
@@ -331,9 +406,15 @@ const AdminDashboard = ({ onToast }) => {
                     <td style={{ padding: '14px 12px' }}>{prod.category}</td>
                     <td style={{ padding: '14px 12px', fontWeight: 800 }}>₹{prod.price.toLocaleString('en-IN')}</td>
                     <td style={{ padding: '14px 12px' }}>
-                      <span className={prod.stock > 0 ? 'badge badge-green' : 'badge badge-yellow'}>
-                        {prod.stock} units
-                      </span>
+                      {prod.stock < 10 ? (
+                        <span className="badge badge-yellow" style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', color: 'var(--danger)', fontWeight: 800 }}>
+                          ⚠️ Low Stock: {prod.stock} left
+                        </span>
+                      ) : (
+                        <span className="badge badge-green">
+                          {prod.stock} units
+                        </span>
+                      )}
                     </td>
                     <td style={{ padding: '14px 12px', textAlign: 'right' }}>
                       <button
@@ -360,6 +441,12 @@ const AdminDashboard = ({ onToast }) => {
             padding: '24px',
             boxShadow: 'var(--card-shadow)'
           }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '1.3rem', color: 'var(--text-primary)' }}>Manage Customer Orders</h2>
+              <button onClick={exportOrdersCSV} className="btn btn-secondary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                📥 Export Orders CSV
+              </button>
+            </div>
             {orders.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
                 No customer orders found in the database.
@@ -490,10 +577,21 @@ const AdminDashboard = ({ onToast }) => {
                       )}
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                      <input
+                        type="text"
+                        placeholder="Technician Name & Phone"
+                        defaultValue={bk.technicianName || ''}
+                        onBlur={(e) => {
+                          if (e.target.value !== bk.technicianName) {
+                            handleUpdateBookingStatus(bk._id || bk.id, bk.status || 'Pending', e.target.value);
+                          }
+                        }}
+                        style={{ padding: '8px 12px', fontSize: '0.85rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-main)', color: 'var(--text-primary)' }}
+                      />
                       <select
                         value={bk.status || 'Pending'}
-                        onChange={(e) => handleUpdateBookingStatus(bk._id || bk.id, e.target.value)}
+                        onChange={(e) => handleUpdateBookingStatus(bk._id || bk.id, e.target.value, bk.technicianName)}
                         className="form-select"
                         style={{ width: 'auto', padding: '8px 12px', fontSize: '0.85rem', fontWeight: 700 }}
                       >
@@ -506,6 +604,63 @@ const AdminDashboard = ({ onToast }) => {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 6. TAB 4: MANAGE PROMO COUPONS */}
+        {activeTab === 'coupons' && (
+          <div style={{
+            backgroundColor: 'var(--bg-card)',
+            borderRadius: '16px',
+            border: '1px solid var(--border-color)',
+            padding: '24px',
+            boxShadow: 'var(--card-shadow)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '1.3rem', color: 'var(--text-primary)' }}>Active Promo Coupons & Offers</h2>
+              <button onClick={() => setIsAddCouponModalOpen(true)} className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <FiPlus /> Create New Coupon
+              </button>
+            </div>
+
+            {coupons.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                No promo coupons created yet. Click "Create New Coupon" to add discount codes for customers.
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                      <th style={{ padding: '12px' }}>Coupon Code</th>
+                      <th style={{ padding: '12px' }}>Discount</th>
+                      <th style={{ padding: '12px' }}>Max Savings</th>
+                      <th style={{ padding: '12px' }}>Min Order</th>
+                      <th style={{ padding: '12px' }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {coupons.map((c, i) => (
+                      <tr key={c._id || i} style={{ borderBottom: '1px solid var(--border-color)', fontSize: '0.92rem' }}>
+                        <td style={{ padding: '14px 12px', fontWeight: 800, color: 'var(--primary-blue)' }}>
+                          <span style={{ backgroundColor: 'rgba(11, 61, 145, 0.1)', padding: '4px 10px', borderRadius: '6px', letterSpacing: '1px' }}>
+                            {c.code}
+                          </span>
+                        </td>
+                        <td style={{ padding: '14px 12px', fontWeight: 700 }}>{c.discountPercent || c.discountAmount}% OFF</td>
+                        <td style={{ padding: '14px 12px' }}>₹{c.maxDiscount || 500}</td>
+                        <td style={{ padding: '14px 12px' }}>₹{c.minOrderValue || 0}</td>
+                        <td style={{ padding: '14px 12px' }}>
+                          <span className={c.isActive !== false ? 'badge badge-green' : 'badge badge-yellow'}>
+                            {c.isActive !== false ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
@@ -643,6 +798,100 @@ const AdminDashboard = ({ onToast }) => {
                   style={{ width: '100%', marginTop: '10px' }}
                 >
                   {submittingProd ? 'Creating...' : 'Add to Catalog'}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Add Coupon Modal */}
+        {isAddCouponModalOpen && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.65)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            padding: '20px'
+          }}>
+            <div style={{
+              backgroundColor: 'var(--bg-card)',
+              borderRadius: '20px',
+              border: '1px solid var(--border-color)',
+              maxWidth: '480px',
+              width: '100%',
+              padding: '32px',
+              boxShadow: '0 25px 50px rgba(0,0,0,0.3)',
+              position: 'relative'
+            }}>
+              <button
+                onClick={() => setIsAddCouponModalOpen(false)}
+                style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                <FiX />
+              </button>
+
+              <h2 style={{ fontSize: '1.4rem', marginBottom: '20px', color: 'var(--text-primary)' }}>Create Promo Coupon</h2>
+
+              <form onSubmit={handleCreateCoupon}>
+                <div className="form-group">
+                  <label className="form-label">Coupon Code (Uppercase) *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newCoupon.code}
+                    onChange={(e) => setNewCoupon({ ...newCoupon, code: e.target.value.toUpperCase() })}
+                    className="form-input"
+                    placeholder="e.g. NAVNATH10 or FESTIVE20"
+                    style={{ textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                  <div className="form-group">
+                    <label className="form-label">Discount (%) *</label>
+                    <input
+                      type="number"
+                      required
+                      min="1"
+                      max="100"
+                      value={newCoupon.discountPercent}
+                      onChange={(e) => setNewCoupon({ ...newCoupon, discountPercent: Number(e.target.value) })}
+                      className="form-input"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Max Savings (₹)</label>
+                    <input
+                      type="number"
+                      value={newCoupon.maxDiscount}
+                      onChange={(e) => setNewCoupon({ ...newCoupon, maxDiscount: Number(e.target.value) })}
+                      className="form-input"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Minimum Order Value (₹)</label>
+                  <input
+                    type="number"
+                    value={newCoupon.minOrderValue}
+                    onChange={(e) => setNewCoupon({ ...newCoupon, minOrderValue: Number(e.target.value) })}
+                    className="form-input"
+                    placeholder="e.g. 500"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ width: '100%', marginTop: '10px' }}
+                >
+                  Create Coupon Code
                 </button>
               </form>
             </div>

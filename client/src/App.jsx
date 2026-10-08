@@ -17,6 +17,7 @@ import OrderSuccess from './pages/OrderSuccess';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Wishlist from './pages/Wishlist';
 import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import ForgotPassword from './pages/ForgotPassword';
@@ -50,6 +51,7 @@ const App = () => {
             <Route path="/products/:id" element={<ProductDetails onToast={showToast} />} />
             <Route path="/services" element={<Services onToast={showToast} />} />
             <Route path="/cart" element={<Cart onToast={showToast} />} />
+            <Route path="/wishlist" element={<Wishlist onToast={showToast} />} />
             <Route path="/checkout" element={<Checkout onToast={showToast} />} />
             <Route path="/order-success/:id" element={<OrderSuccess />} />
             <Route path="/contact" element={<Contact onToast={showToast} />} />

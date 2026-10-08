@@ -388,7 +388,7 @@ const Navbar = () => {
 
             {/* Wishlist */}
             <Link
-              to="/dashboard?tab=wishlist"
+              to="/wishlist"
               title="Wishlist"
               style={{
                 position: 'relative',
