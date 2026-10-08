@@ -78,6 +78,8 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     localStorage.removeItem('navnath_token');
+    localStorage.removeItem('navnath_cart');
+    localStorage.removeItem('navnath_wishlist');
   };
 
   // Quick helper for Demo testing

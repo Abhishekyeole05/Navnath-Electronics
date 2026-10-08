@@ -1,14 +1,17 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FiShoppingCart, FiHeart, FiStar, FiCheck, FiEye } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 
 const ProductCard = ({ product, onToast }) => {
   const { addToCart } = useCart();
   const { wishlist, toggleWishlist, isInWishlist } = useWishlist();
   const { t, tProduct } = useLanguage();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const id = product._id || product.id;
   const isWishlisted = isInWishlist(id);
@@ -17,17 +20,36 @@ const ProductCard = ({ product, onToast }) => {
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product, 1);
+    if (!user) {
+      if (onToast) onToast('Please sign in to add products to your cart', 'warning');
+      navigate('/login');
+      return;
+    }
+    const res = addToCart(product, 1);
+    if (res && res.requireAuth) {
+      if (onToast) onToast(res.message, 'warning');
+      navigate('/login');
+      return;
+    }
     if (onToast) {
       onToast(`Added "${tProduct(product.name).split(' ')[0]}..." to Cart!`, 'success');
     }
   };
 
-
   const handleWishlistToggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleWishlist(id);
+    if (!user) {
+      if (onToast) onToast('Please sign in to add products to your wishlist', 'warning');
+      navigate('/login');
+      return;
+    }
+    const res = toggleWishlist(id);
+    if (res && res.requireAuth) {
+      if (onToast) onToast(res.message, 'warning');
+      navigate('/login');
+      return;
+    }
     if (onToast) {
       onToast(isWishlisted ? 'Removed from Wishlist' : 'Added to Wishlist!', 'info');
     }

@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { FiHeart, FiShoppingCart, FiTrash2, FiArrowLeft, FiPackage } from 'react-icons/fi';
+import { FiHeart, FiShoppingCart, FiTrash2, FiArrowLeft, FiPackage, FiLock } from 'react-icons/fi';
 
 const Wishlist = ({ onToast }) => {
   const { wishlist, toggleWishlist } = useWishlist();
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const { tProduct } = useLanguage();
 
   const [products, setProducts] = useState([]);
@@ -16,6 +18,11 @@ const Wishlist = ({ onToast }) => {
 
   useEffect(() => {
     const fetchWishlistProducts = async () => {
+      if (!user) {
+        setProducts([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
         const res = await axios.get('/api/products');
@@ -50,6 +57,46 @@ const Wishlist = ({ onToast }) => {
       onToast(`Removed "${tProduct(productName)}" from Wishlist`, 'info');
     }
   };
+
+  if (!user) {
+    return (
+      <div style={{ backgroundColor: 'var(--bg-main)', minHeight: '85vh', padding: '80px 0' }}>
+        <div className="container" style={{ maxWidth: '560px', textAlign: 'center' }}>
+          <div style={{
+            backgroundColor: 'var(--bg-card)',
+            borderRadius: '20px',
+            border: '1px solid var(--border-color)',
+            padding: '60px 24px',
+            boxShadow: 'var(--card-shadow)'
+          }}>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(11, 61, 145, 0.1)',
+              color: 'var(--primary-blue)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px',
+              fontSize: '2rem'
+            }}>
+              <FiLock />
+            </div>
+            <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
+              Sign In to View Your Wishlist
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '28px', fontSize: '0.95rem' }}>
+              Please sign in or create an account to save electrical items, modular switches, and home services.
+            </p>
+            <Link to="/login" className="btn btn-primary" style={{ padding: '12px 32px' }}>
+              Sign In to Your Account
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

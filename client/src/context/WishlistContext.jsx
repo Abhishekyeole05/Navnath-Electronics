@@ -8,20 +8,32 @@ export const WishlistProvider = ({ children }) => {
   const { user, token } = useAuth();
   const [wishlist, setWishlist] = useState(() => {
     const saved = localStorage.getItem('navnath_wishlist');
-    return saved ? JSON.parse(saved) : [];
+    const tokenExists = localStorage.getItem('navnath_token');
+    return saved && tokenExists ? JSON.parse(saved) : [];
   });
 
   useEffect(() => {
     if (user && user.wishlist) {
       setWishlist(user.wishlist);
+    } else if (!user && !token) {
+      setWishlist([]);
+      localStorage.removeItem('navnath_wishlist');
     }
-  }, [user]);
+  }, [user, token]);
 
   useEffect(() => {
-    localStorage.setItem('navnath_wishlist', JSON.stringify(wishlist));
-  }, [wishlist]);
+    if (user || token) {
+      localStorage.setItem('navnath_wishlist', JSON.stringify(wishlist));
+    } else {
+      localStorage.removeItem('navnath_wishlist');
+    }
+  }, [wishlist, user, token]);
 
   const toggleWishlist = async (productId) => {
+    if (!user && !token) {
+      return { success: false, requireAuth: true, message: 'Please sign in to add products to your wishlist.' };
+    }
+
     setWishlist(prev => {
       if (prev.includes(productId)) {
         return prev.filter(id => id !== productId);
@@ -36,9 +48,10 @@ export const WishlistProvider = ({ children }) => {
         console.warn('Failed to sync wishlist with server');
       }
     }
+    return { success: true };
   };
 
-  const isInWishlist = (productId) => wishlist.includes(productId);
+  const isInWishlist = (productId) => (user || token) ? wishlist.includes(productId) : false;
 
   return (
     <WishlistContext.Provider value={{ wishlist, toggleWishlist, isInWishlist }}>

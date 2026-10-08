@@ -88,14 +88,34 @@ const ProductDetails = ({ onToast }) => {
   const isWishlisted = isInWishlist(productId);
 
   const handleAddToCart = () => {
-    addToCart(product, quantity);
+    if (!user) {
+      if (onToast) onToast('Please sign in to add products to your cart', 'warning');
+      navigate('/login');
+      return;
+    }
+    const res = addToCart(product, quantity);
+    if (res && res.requireAuth) {
+      if (onToast) onToast(res.message, 'warning');
+      navigate('/login');
+      return;
+    }
     if (onToast) {
       onToast(`Added ${quantity} x "${product.name.split(' ')[0]}..." to Cart!`, 'success');
     }
   };
 
   const handleBuyNow = () => {
-    addToCart(product, quantity);
+    if (!user) {
+      if (onToast) onToast('Please sign in to proceed with purchase', 'warning');
+      navigate('/login');
+      return;
+    }
+    const res = addToCart(product, quantity);
+    if (res && res.requireAuth) {
+      if (onToast) onToast(res.message, 'warning');
+      navigate('/login');
+      return;
+    }
     navigate('/checkout');
   };
 
