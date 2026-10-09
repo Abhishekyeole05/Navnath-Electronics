@@ -11,9 +11,13 @@ const apiRoutes = require('./routes/api');
 
 const app = express();
 
+const path = require('path');
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+// Serve static client assets (e.g. product and category images)
+app.use(express.static(path.join(__dirname, '../client/public')));
 
 // API Routes
 app.use('/api', apiRoutes);
