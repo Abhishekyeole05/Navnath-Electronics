@@ -2,6 +2,7 @@ const {
   User, Product, Category, Service, Booking, Order, Coupon, Review, dbHelper 
 } = require('../models');
 const { getUseMemoryStore, memoryStore } = require('../config/db');
+const { productImageMap, categoryImageMap } = require('./productImageMap');
 
 const initialCategories = [
   {
@@ -9,7 +10,7 @@ const initialCategories = [
     slug: 'wires-cables',
     icon: 'FiActivity',
     description: 'High quality copper & FR PVC insulated wires for domestic & industrial wiring',
-    image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80',
+    image: categoryImageMap['wires-cables'],
     productCount: 3
   },
   {
@@ -17,7 +18,7 @@ const initialCategories = [
     slug: 'switches-sockets',
     icon: 'FiToggleRight',
     description: 'Modular switches, sockets, MCBs, and heavy-duty distribution panels',
-    image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80',
+    image: categoryImageMap['switches-sockets'],
     productCount: 3
   },
   {
@@ -25,7 +26,7 @@ const initialCategories = [
     slug: 'lighting-leds',
     icon: 'FiSun',
     description: 'Energy-saving LED batten tubes, ceiling downlights, and smart bulbs',
-    image: 'https://images.unsplash.com/photo-1565814329452-e1efa11c5b89?auto=format&fit=crop&w=600&q=80',
+    image: categoryImageMap['lighting-leds'],
     productCount: 3
   },
   {
@@ -33,7 +34,7 @@ const initialCategories = [
     slug: 'fans-appliances',
     icon: 'FiWind',
     description: 'BLDC high speed ceiling fans, exhaust fans, and home stabilizers',
-    image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=600&q=80',
+    image: categoryImageMap['fans-appliances'],
     productCount: 2
   },
   {
@@ -41,7 +42,7 @@ const initialCategories = [
     slug: 'motors-pumps',
     icon: 'FiSliders',
     description: 'Submersible pumps, monoblock water pumps, and industrial electric motors',
-    image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
+    image: categoryImageMap['motors-pumps'],
     productCount: 2
   },
   {
@@ -49,7 +50,7 @@ const initialCategories = [
     slug: 'industrial-electricals',
     icon: 'FiCpu',
     description: 'Three-phase starters, contactors, overload relays, and industrial switchgears',
-    image: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=600&q=80',
+    image: categoryImageMap['industrial-electricals'],
     productCount: 1
   },
   {
@@ -57,7 +58,7 @@ const initialCategories = [
     slug: 'smart-home',
     icon: 'FiHome',
     description: 'Smart Wi-Fi plugs, home automation relays, and voice-controlled lighting',
-    image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=600&q=80',
+    image: categoryImageMap['smart-home'],
     productCount: 1
   }
 ];
@@ -82,10 +83,7 @@ const initialProducts = [
       { key: 'Voltage Grade', value: '1100V' },
       { key: 'Core Type', value: 'Single Core' }
     ],
-    images: [
-      'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80',
-      'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80'
-    ],
+    images: productImageMap['havells-lifeline-copper-wire-2-5-sqmm'],
     isFeatured: true,
     sku: 'HVL-CBL-25R',
     warranty: '10 Years Brand Warranty'
@@ -108,9 +106,7 @@ const initialProducts = [
       { key: 'Color', value: 'Yellow' },
       { key: 'Standard', value: 'IS:694' }
     ],
-    images: [
-      'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80'
-    ],
+    images: productImageMap['polycab-green-fr-wire-1-5-sqmm'],
     isFeatured: false,
     sku: 'PLY-CBL-15Y',
     warranty: '5 Years Brand Warranty'
@@ -132,9 +128,7 @@ const initialProducts = [
       { key: 'Conductor Size', value: '4.0 sq mm' },
       { key: 'Color', value: 'Black' }
     ],
-    images: [
-      'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80'
-    ],
+    images: productImageMap['finolex-fr-copper-wire-4-0-sqmm'],
     isFeatured: false,
     sku: 'FNX-CBL-40B',
     warranty: '7 Years Brand Warranty'
@@ -157,9 +151,7 @@ const initialProducts = [
       { key: 'Material', value: 'Fire Retardant Polycarbonate' },
       { key: 'Color', value: 'Glossy White' }
     ],
-    images: [
-      'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80'
-    ],
+    images: productImageMap['anchor-roma-12-module-switch-board'],
     isFeatured: true,
     sku: 'ANC-RMA-12M',
     warranty: '10 Years Brand Replacement Warranty'
@@ -182,9 +174,7 @@ const initialProducts = [
       { key: 'Curve Type', value: 'C-Curve' },
       { key: 'Breaking Capacity', value: '10 kA' }
     ],
-    images: [
-      'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80'
-    ],
+    images: productImageMap['schneider-electric-acti9-32a-mcb'],
     isFeatured: true,
     sku: 'SCH-MCB-32DP',
     warranty: '3 Years Warranty'
@@ -206,9 +196,7 @@ const initialProducts = [
       { key: 'Safety', value: 'Inbuilt Safety Shutter' },
       { key: 'Finish', value: 'Matt White' }
     ],
-    images: [
-      'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80'
-    ],
+    images: productImageMap['legrand-mylinc-16a-power-socket'],
     isFeatured: false,
     sku: 'LGR-SOC-16A',
     warranty: '5 Years Brand Warranty'
@@ -231,9 +219,7 @@ const initialProducts = [
       { key: 'Lumens Output', value: '2000 Lumens' },
       { key: 'Surge Protection', value: '3.5 kV' }
     ],
-    images: [
-      'https://images.unsplash.com/photo-1565814329452-e1efa11c5b89?auto=format&fit=crop&w=800&q=80'
-    ],
+    images: productImageMap['philips-t5-20w-led-batten-light'],
     isFeatured: true,
     sku: 'PHP-LED-20W',
     warranty: '2 Years Manufacturer Warranty'
@@ -255,9 +241,7 @@ const initialProducts = [
       { key: 'Base Type', value: 'B22 Indian Pin Type' },
       { key: 'Pack Size', value: '4 Bulbs' }
     ],
-    images: [
-      'https://images.unsplash.com/photo-1565814329452-e1efa11c5b89?auto=format&fit=crop&w=800&q=80'
-    ],
+    images: productImageMap['havells-adore-12w-led-bulb-pack-4'],
     isFeatured: false,
     sku: 'HVL-LED-12W4',
     warranty: '2 Years Replacement Warranty'
@@ -281,9 +265,7 @@ const initialProducts = [
       { key: 'Air Delivery', value: '240 CMM' },
       { key: 'Remote Control', value: 'Included (Timer & Sleep mode)' }
     ],
-    images: [
-      'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=800&q=80'
-    ],
+    images: productImageMap['crompton-silentpro-bldc-ceiling-fan'],
     isFeatured: true,
     sku: 'CRM-FAN-BLDC',
     warranty: '5 Years Motor Warranty'
@@ -307,9 +289,7 @@ const initialProducts = [
       { key: 'Winding', value: '100% Pure Copper' },
       { key: 'Control Panel', value: 'Digital Starter Box Included' }
     ],
-    images: [
-      'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
-    ],
+    images: productImageMap['crompton-1-hp-submersible-water-pump'],
     isFeatured: true,
     sku: 'CRM-PMP-1HP',
     warranty: '2 Years Manufacturer Warranty'
@@ -331,9 +311,7 @@ const initialProducts = [
       { key: 'Max Head', value: '80 Feet' },
       { key: 'Pipe Size', value: '25mm x 25mm' }
     ],
-    images: [
-      'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
-    ],
+    images: productImageMap['kirloskar-chhotu-0-5-hp-pump'],
     isFeatured: false,
     sku: 'KIR-PMP-05HP',
     warranty: '1.5 Years Warranty'
@@ -355,9 +333,7 @@ const initialProducts = [
       { key: 'Relay Range', value: '9A - 14A' },
       { key: 'Enclosure', value: 'Dust & Splash Resistant Metal Case' }
     ],
-    images: [
-      'https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80'
-    ],
+    images: productImageMap['lnt-three-phase-motor-starter'],
     isFeatured: false,
     sku: 'LNT-IND-DOL3',
     warranty: '1 Year Industrial Warranty'
@@ -468,7 +444,18 @@ const seedDatabase = async () => {
   try {
     const existingProducts = await dbHelper.find('products', Product);
     if (existingProducts && existingProducts.length > 0) {
-      console.log(`📦 [Database Status] Real catalog found with ${existingProducts.length} product(s). Seeding skipped to protect existing data.`);
+      console.log(`📦 [Database Status] Real catalog found with ${existingProducts.length} product(s). Protecting catalog and syncing images if needed.`);
+      for (const prod of existingProducts) {
+        if (productImageMap[prod.slug]) {
+          const currentImg = prod.images && prod.images[0];
+          const targetImgs = productImageMap[prod.slug];
+          if (!currentImg || currentImg.includes('unsplash.com') || currentImg !== targetImgs[0]) {
+            await dbHelper.findByIdAndUpdate('products', Product, prod._id || prod.id, {
+              images: targetImgs
+            });
+          }
+        }
+      }
       return;
     }
 
@@ -580,7 +567,7 @@ const seedDatabase = async () => {
             name: 'Havells Life Line Copper Wire 2.5 sq mm (90m Red)',
             price: 3450,
             quantity: 2,
-            image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=400&q=80',
+            image: productImageMap['havells-lifeline-copper-wire-2-5-sqmm'][0],
             brand: 'Havells'
           },
           {
@@ -588,7 +575,7 @@ const seedDatabase = async () => {
             name: 'Anchor Roma Classic 12-Module Modular Switch Board',
             price: 1290,
             quantity: 1,
-            image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80',
+            image: productImageMap['anchor-roma-12-module-switch-board'][0],
             brand: 'Anchor'
           }
         ],
@@ -618,7 +605,7 @@ const seedDatabase = async () => {
             name: 'Crompton SilentPro BLDC Ceiling Fan with Remote',
             price: 3890,
             quantity: 2,
-            image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=400&q=80',
+            image: productImageMap['crompton-silentpro-bldc-ceiling-fan'][0],
             brand: 'Crompton'
           }
         ],

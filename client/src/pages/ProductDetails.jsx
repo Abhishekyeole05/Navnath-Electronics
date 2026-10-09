@@ -161,9 +161,13 @@ const ProductDetails = ({ onToast }) => {
               position: 'relative'
             }}>
               <img
-                src={selectedImage || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80'}
+                src={selectedImage || '/images/placeholder-product.svg'}
                 alt={product.name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/images/placeholder-product.svg';
+                }}
+                style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '16px' }}
               />
               {product.discount > 0 && (
                 <span className="badge badge-yellow" style={{ position: 'absolute', top: '16px', left: '16px', fontSize: '0.8rem' }}>
@@ -189,7 +193,15 @@ const ProductDetails = ({ onToast }) => {
                       opacity: selectedImage === img ? 1 : 0.7
                     }}
                   >
-                    <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img
+                      src={img}
+                      alt=""
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/images/placeholder-product.svg';
+                      }}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '4px' }}
+                    />
                   </div>
                 ))}
               </div>

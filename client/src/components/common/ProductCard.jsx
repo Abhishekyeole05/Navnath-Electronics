@@ -12,7 +12,7 @@ const ProductCard = ({ product, onToast }) => {
 
   const id = product._id || product.id;
   const isWishlisted = isInWishlist(id);
-  const image = product.images && product.images[0] ? product.images[0] : 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80';
+  const image = product.images && product.images[0] ? product.images[0] : '/images/placeholder-product.svg';
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -111,10 +111,16 @@ const ProductCard = ({ product, onToast }) => {
         <img
           src={image}
           alt={product.name}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = '/images/placeholder-product.svg';
+          }}
+          loading="lazy"
           style={{
             width: '100%',
             height: '100%',
-            objectFit: 'cover',
+            objectFit: 'contain',
+            padding: '8px',
             transition: 'transform 0.4s ease'
           }}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
