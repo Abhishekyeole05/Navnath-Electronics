@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiMail, FiLock, FiLogOut, FiZap, FiArrowRight, FiCheckCircle } from 'react-icons/fi';
+import { FiMail, FiLock, FiLogOut, FiZap, FiArrowRight, FiCheckCircle, FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Login = ({ onToast }) => {
   const { user, login, loginAsDemoAdmin, loginAsDemoCustomer } = useAuth();
@@ -15,6 +15,7 @@ const Login = ({ onToast }) => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -124,14 +125,25 @@ const Login = ({ onToast }) => {
 
             <div className="form-group">
               <label className="form-label">Password</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="form-input"
-                placeholder="••••••••"
-              />
+              <div className="password-wrapper">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="form-input"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
             </div>
             <div style={{ textAlign: 'right', marginTop: '-4px', marginBottom: '8px' }}>
   <Link

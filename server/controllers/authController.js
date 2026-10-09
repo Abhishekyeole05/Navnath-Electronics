@@ -212,70 +212,82 @@ exports.forgotPassword = async (req, res) => {
       }
     );
 
-    const origin = req.headers.origin || process.env.FRONTEND_URL || 'http://localhost:5174';
+    const origin = req.headers.origin || process.env.FRONTEND_URL || 'http://localhost:5173';
     const resetLink = `${origin}/reset-password/${resetToken}`;
 
     const emailUser = process.env.EMAIL_USER || 'abhishekyeole9975@gmail.com';
     const emailPass = process.env.EMAIL_PASS;
 
-    if (!emailPass || !emailPass.trim()) {
-      console.warn('⚠️ EMAIL_PASS (Gmail App Password) missing in server/.env');
-      return res.status(400).json({
-        success: false,
-        message: 'Gmail App Password (EMAIL_PASS) is missing in server/.env. Please paste your 16-character Gmail App Password into server/.env to send real emails to your Gmail inbox.'
-      });
+    let emailSent = false;
+    let mailErrorMessage = null;
+
+    if (emailPass && emailPass.trim()) {
+      try {
+        const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: emailUser,
+            pass: emailPass.trim()
+          }
+        });
+
+        await transporter.sendMail({
+          from: `"New Navnath Electricals" <${emailUser}>`,
+          to: user.email,
+          subject: '🔑 Password Reset Request - New Navnath Electricals',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+              <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #0b3d91; margin: 0;">NEW NAVNATH</h2>
+                <p style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">Electronics & Electricals — Manmad</p>
+              </div>
+              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+              <h3 style="color: #1e293b;">Password Reset Request</h3>
+              <p style="color: #334155; font-size: 0.95rem; line-height: 1.5;">Hello <strong>${user.name}</strong>,</p>
+              <p style="color: #334155; font-size: 0.95rem; line-height: 1.5;">We received a request to reset your password for your account (<strong>${user.email}</strong>).</p>
+              <p style="color: #334155; font-size: 0.95rem; line-height: 1.5;">Click the secure button below to create your new password:</p>
+              <div style="text-align: center; margin: 28px 0;">
+                <a href="${resetLink}" style="display: inline-block; padding: 14px 28px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">
+                  🔒 Reset My Password Now
+                </a>
+              </div>
+              <p style="color: #64748b; font-size: 0.85rem;">This link is secure and will expire in <strong>15 minutes</strong>.</p>
+              <p style="color: #64748b; font-size: 0.85rem;">If you did not request a password reset, you can safely ignore this email.</p>
+              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0 16px;" />
+              <p style="color: #94a3b8; font-size: 0.78rem; text-align: center;">New Navnath Electronics & Electricals, Opposite Bus Stand, Manmad, Maharashtra 423104</p>
+            </div>
+          `
+        });
+
+        console.log(`📧 [Gmail Sent] Reset email successfully delivered to ${user.email}`);
+        emailSent = true;
+      } catch (mailError) {
+        console.error('❌ Gmail SMTP Email delivery error:', mailError.message);
+        mailErrorMessage = mailError.message;
+      }
+    } else {
+      console.log(`ℹ️ [Email Note] EMAIL_PASS is not configured in server/.env. Generated direct reset link: ${resetLink}`);
     }
 
-    try {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: emailUser,
-          pass: emailPass.trim()
-        }
-      });
-
-      await transporter.sendMail({
-        from: `"New Navnath Electricals" <${emailUser}>`,
-        to: user.email,
-        subject: '🔑 Password Reset Request - New Navnath Electricals',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
-            <div style="text-align: center; margin-bottom: 20px;">
-              <h2 style="color: #0b3d91; margin: 0;">NEW NAVNATH</h2>
-              <p style="color: #64748b; font-size: 0.85rem; margin-top: 4px;">Electronics & Electricals — Manmad</p>
-            </div>
-            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-            <h3 style="color: #1e293b;">Password Reset Request</h3>
-            <p style="color: #334155; font-size: 0.95rem; line-height: 1.5;">Hello <strong>${user.name}</strong>,</p>
-            <p style="color: #334155; font-size: 0.95rem; line-height: 1.5;">We received a request to reset your password for your account (<strong>${user.email}</strong>).</p>
-            <p style="color: #334155; font-size: 0.95rem; line-height: 1.5;">Click the secure button below to create your new password:</p>
-            <div style="text-align: center; margin: 28px 0;">
-              <a href="${resetLink}" style="display: inline-block; padding: 14px 28px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">
-                🔒 Reset My Password Now
-              </a>
-            </div>
-            <p style="color: #64748b; font-size: 0.85rem;">This link is secure and will expire in <strong>15 minutes</strong>.</p>
-            <p style="color: #64748b; font-size: 0.85rem;">If you did not request a password reset, you can safely ignore this email.</p>
-            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0 16px;" />
-            <p style="color: #94a3b8; font-size: 0.78rem; text-align: center;">New Navnath Electronics & Electricals, Opposite Bus Stand, Manmad, Maharashtra 423104</p>
-          </div>
-        `
-      });
-
-      console.log(`📧 [Gmail Sent] Reset email successfully delivered to ${user.email}`);
-
+    if (emailSent) {
       return res.json({
         success: true,
+        emailDelivery: 'sent',
+        resetLink,
+        resetToken,
         message: `Password reset email sent to ${user.email}. Please check your Gmail inbox!`
       });
-    } catch (mailError) {
-      console.error('❌ Gmail SMTP Email delivery error:', mailError.message);
-      return res.status(400).json({
-        success: false,
-        message: `Gmail delivery failed: ${mailError.message}. Please check your 16-character App Password in server/.env.`
-      });
     }
+
+    return res.json({
+      success: true,
+      emailDelivery: mailErrorMessage ? 'failed_fallback' : 'direct',
+      resetLink,
+      resetToken,
+      message: mailErrorMessage
+        ? `Reset link ready! (Gmail delivery notice: ${mailErrorMessage}). You can reset your password immediately below.`
+        : `Password reset link created! You can reset your password immediately using the link below.`
+    });
 
   } catch (error) {
     console.error('Forgot password error:', error);
