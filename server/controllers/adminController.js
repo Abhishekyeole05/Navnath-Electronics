@@ -164,7 +164,9 @@ exports.updateBookingStatus = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await dbHelper.find('users', User);
-    res.json({ success: true, users });
+    // Never expose password hashes — strip the field before sending
+    const safeUsers = users.map(({ password, ...rest }) => rest);
+    res.json({ success: true, users: safeUsers });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to fetch users' });
   }

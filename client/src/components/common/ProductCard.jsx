@@ -1,33 +1,55 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FiShoppingCart, FiHeart, FiStar, FiCheck, FiEye } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 
 const ProductCard = ({ product, onToast }) => {
   const { addToCart } = useCart();
   const { wishlist, toggleWishlist, isInWishlist } = useWishlist();
   const { t, tProduct } = useLanguage();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const id = product._id || product.id;
   const isWishlisted = isInWishlist(id);
-  const image = product.images && product.images[0] ? product.images[0] : 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80';
+  const image = product.images && product.images[0] ? product.images[0] : '/images/placeholder-product.svg';
 
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product, 1);
+    if (!user) {
+      if (onToast) onToast('Please sign in to add products to your cart', 'warning');
+      navigate('/login');
+      return;
+    }
+    const res = addToCart(product, 1);
+    if (res && res.requireAuth) {
+      if (onToast) onToast(res.message, 'warning');
+      navigate('/login');
+      return;
+    }
     if (onToast) {
       onToast(`Added "${tProduct(product.name).split(' ')[0]}..." to Cart!`, 'success');
     }
   };
 
-
   const handleWishlistToggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleWishlist(id);
+    if (!user) {
+      if (onToast) onToast('Please sign in to add products to your wishlist', 'warning');
+      navigate('/login');
+      return;
+    }
+    const res = toggleWishlist(id);
+    if (res && res.requireAuth) {
+      if (onToast) onToast(res.message, 'warning');
+      navigate('/login');
+      return;
+    }
     if (onToast) {
       onToast(isWishlisted ? 'Removed from Wishlist' : 'Added to Wishlist!', 'info');
     }
@@ -111,10 +133,16 @@ const ProductCard = ({ product, onToast }) => {
         <img
           src={image}
           alt={product.name}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = '/images/placeholder-product.svg';
+          }}
+          loading="lazy"
           style={{
             width: '100%',
             height: '100%',
-            objectFit: 'cover',
+            objectFit: 'contain',
+            padding: '8px',
             transition: 'transform 0.4s ease'
           }}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}

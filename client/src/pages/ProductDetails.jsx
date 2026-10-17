@@ -29,8 +29,10 @@ const ProductDetails = ({ onToast }) => {
 
   // Review Form state
   const [ratingInput, setRatingInput] = useState(5);
+  const [hoverRating, setHoverRating] = useState(0);
   const [commentInput, setCommentInput] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [canReview, setCanReview] = useState(false);
 
   useEffect(() => {
     const fetchProductDetails = async () => {
@@ -53,6 +55,15 @@ const ProductDetails = ({ onToast }) => {
                 .filter(p => (p._id || p.id) !== (prod._id || prod.id))
                 .slice(0, 4)
             );
+          }
+
+          // Check if current user can review this product
+          if (user) {
+            const pid = prod._id || prod.id;
+            try {
+              const revCheck = await axios.get(`/api/reviews/can-review/${pid}`);
+              if (revCheck.data.success) setCanReview(revCheck.data.canReview);
+            } catch (_) {}
           }
         }
       } catch (err) {
@@ -88,14 +99,34 @@ const ProductDetails = ({ onToast }) => {
   const isWishlisted = isInWishlist(productId);
 
   const handleAddToCart = () => {
-    addToCart(product, quantity);
+    if (!user) {
+      if (onToast) onToast('Please sign in to add products to your cart', 'warning');
+      navigate('/login');
+      return;
+    }
+    const res = addToCart(product, quantity);
+    if (res && res.requireAuth) {
+      if (onToast) onToast(res.message, 'warning');
+      navigate('/login');
+      return;
+    }
     if (onToast) {
       onToast(`Added ${quantity} x "${product.name.split(' ')[0]}..." to Cart!`, 'success');
     }
   };
 
   const handleBuyNow = () => {
-    addToCart(product, quantity);
+    if (!user) {
+      if (onToast) onToast('Please sign in to proceed with purchase', 'warning');
+      navigate('/login');
+      return;
+    }
+    const res = addToCart(product, quantity);
+    if (res && res.requireAuth) {
+      if (onToast) onToast(res.message, 'warning');
+      navigate('/login');
+      return;
+    }
     navigate('/checkout');
   };
 
@@ -116,6 +147,7 @@ const ProductDetails = ({ onToast }) => {
       if (res.data.success) {
         setReviews([res.data.review, ...reviews]);
         setCommentInput('');
+        setCanReview(false);
         if (onToast) onToast('Review posted successfully!', 'success');
       }
     } catch (err) {
@@ -124,6 +156,15 @@ const ProductDetails = ({ onToast }) => {
       setReviewSubmitting(false);
     }
   };
+
+  // Compute rating breakdown
+  const ratingBreakdown = [5, 4, 3, 2, 1].map(star => ({
+    star,
+    count: reviews.filter(r => Number(r.rating) === star).length
+  }));
+  const avgRating = reviews.length
+    ? (reviews.reduce((sum, r) => sum + Number(r.rating || 5), 0) / reviews.length).toFixed(1)
+    : (product?.rating || 0);
 
   return (
     <div style={{ backgroundColor: 'var(--bg-main)', minHeight: '85vh', padding: '40px 0' }}>
@@ -161,9 +202,13 @@ const ProductDetails = ({ onToast }) => {
               position: 'relative'
             }}>
               <img
-                src={selectedImage || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80'}
+                src={selectedImage || '/images/placeholder-product.svg'}
                 alt={product.name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = '/images/placeholder-product.svg';
+                }}
+                style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '16px' }}
               />
               {product.discount > 0 && (
                 <span className="badge badge-yellow" style={{ position: 'absolute', top: '16px', left: '16px', fontSize: '0.8rem' }}>
@@ -189,7 +234,15 @@ const ProductDetails = ({ onToast }) => {
                       opacity: selectedImage === img ? 1 : 0.7
                     }}
                   >
-                    <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img
+                      src={img}
+                      alt=""
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/images/placeholder-product.svg';
+                      }}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '4px' }}
+                    />
                   </div>
                 ))}
               </div>
@@ -414,15 +467,71 @@ const ProductDetails = ({ onToast }) => {
           boxShadow: 'var(--card-shadow)',
           marginBottom: '48px'
         }}>
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <FiMessageSquare /> Customer Reviews ({reviews.length})
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <FiMessageSquare /> Customer Reviews & Ratings
           </h2>
+
+          {/* Rating Summary Row */}
+          {reviews.length > 0 && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'auto 1fr',
+              gap: '32px',
+              alignItems: 'center',
+              backgroundColor: 'var(--bg-secondary)',
+              padding: '24px',
+              borderRadius: '14px',
+              marginBottom: '28px'
+            }}>
+              {/* Big Average */}
+              <div style={{ textAlign: 'center', minWidth: '110px' }}>
+                <div style={{ fontSize: '4rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>
+                  {avgRating}
+                </div>
+                <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', margin: '8px 0' }}>
+                  {[1,2,3,4,5].map(n => (
+                    <FiStar key={n} style={{
+                      fill: n <= Math.round(avgRating) ? 'var(--accent-yellow)' : 'none',
+                      color: n <= Math.round(avgRating) ? 'var(--accent-yellow)' : 'var(--border-color)',
+                      fontSize: '1.1rem'
+                    }} />
+                  ))}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  {reviews.length} Verified Reviews
+                </div>
+              </div>
+
+              {/* Breakdown Bars */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {ratingBreakdown.map(({ star, count }) => (
+                  <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.82rem' }}>
+                    <span style={{ minWidth: '20px', color: 'var(--text-secondary)', textAlign: 'right' }}>{star}</span>
+                    <FiStar style={{ fill: 'var(--accent-yellow)', color: 'var(--accent-yellow)', fontSize: '0.8rem', flexShrink: 0 }} />
+                    <div style={{ flex: 1, height: '8px', backgroundColor: 'var(--border-color)', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{
+                        width: reviews.length > 0 ? `${(count / reviews.length) * 100}%` : '0%',
+                        height: '100%',
+                        backgroundColor: star >= 4 ? 'var(--success)' : star === 3 ? 'var(--accent-yellow)' : 'var(--danger)',
+                        borderRadius: '4px',
+                        transition: 'width 0.6s ease'
+                      }} />
+                    </div>
+                    <span style={{ minWidth: '24px', color: 'var(--text-muted)', fontSize: '0.78rem' }}>{count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '32px' }}>
             {/* Reviews List */}
             <div>
               {reviews.length === 0 ? (
-                <p style={{ color: 'var(--text-secondary)' }}>No reviews yet. Be the first to review this product!</p>
+                <div style={{ color: 'var(--text-secondary)', padding: '20px 0' }}>
+                  <FiStar style={{ fontSize: '2.5rem', opacity: 0.3, marginBottom: '8px', display: 'block' }} />
+                  No reviews yet. Be the first verified buyer to share your experience!
+                </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   {reviews.map((rev, i) => (
@@ -431,12 +540,28 @@ const ProductDetails = ({ onToast }) => {
                       paddingBottom: '18px'
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                        <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{rev.userName}</span>
+                        <div>
+                          <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{rev.userName}</span>
+                          <span style={{
+                            marginLeft: '8px',
+                            fontSize: '0.72rem',
+                            backgroundColor: 'rgba(16,185,129,0.12)',
+                            color: 'var(--success)',
+                            padding: '2px 7px',
+                            borderRadius: '20px',
+                            fontWeight: 600
+                          }}>
+                            ✓ Verified Purchase
+                          </span>
+                        </div>
                         <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{rev.date}</span>
                       </div>
                       <div style={{ display: 'flex', gap: '3px', marginBottom: '8px' }}>
-                        {Array.from({ length: rev.rating }).map((_, idx) => (
-                          <FiStar key={idx} style={{ fill: 'var(--accent-yellow)', color: 'var(--accent-yellow)' }} />
+                        {[1,2,3,4,5].map((n) => (
+                          <FiStar key={n} style={{
+                            fill: n <= rev.rating ? 'var(--accent-yellow)' : 'none',
+                            color: n <= rev.rating ? 'var(--accent-yellow)' : 'var(--border-color)'
+                          }} />
                         ))}
                       </div>
                       <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
@@ -456,42 +581,77 @@ const ProductDetails = ({ onToast }) => {
               border: '1px solid var(--border-color)',
               height: 'fit-content'
             }}>
-              <h3 style={{ fontSize: '1.15rem', marginBottom: '16px' }}>Write a Customer Review</h3>
-              <form onSubmit={handleReviewSubmit}>
-                <div className="form-group">
-                  <label className="form-label">Your Rating</label>
-                  <select
-                    value={ratingInput}
-                    onChange={(e) => setRatingInput(Number(e.target.value))}
-                    className="form-select"
-                  >
-                    <option value={5}>5 Stars - Excellent & Genuine</option>
-                    <option value={4}>4 Stars - Good Quality</option>
-                    <option value={3}>3 Stars - Average</option>
-                  </select>
+              {!user ? (
+                <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-secondary)' }}>
+                  <FiStar style={{ fontSize: '2rem', marginBottom: '8px', opacity: 0.4 }} />
+                  <div style={{ fontWeight: 600, marginBottom: '8px' }}>Sign in to leave a review</div>
+                  <a href="/login" className="btn btn-primary btn-sm">Sign In</a>
                 </div>
+              ) : canReview ? (
+                <>
+                  <h3 style={{ fontSize: '1.15rem', marginBottom: '6px' }}>Write a Review</h3>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--success)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    ✓ Verified Purchase — you can leave a review
+                  </p>
+                  <form onSubmit={handleReviewSubmit}>
+                    <div className="form-group">
+                      <label className="form-label">Your Rating</label>
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '6px', marginBottom: '8px' }}>
+                        {[1,2,3,4,5].map(star => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setRatingInput(star)}
+                            onMouseEnter={() => setHoverRating(star)}
+                            onMouseLeave={() => setHoverRating(0)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}
+                          >
+                            <FiStar style={{
+                              fill: star <= (hoverRating || ratingInput) ? 'var(--accent-yellow)' : 'none',
+                              color: star <= (hoverRating || ratingInput) ? 'var(--accent-yellow)' : 'var(--border-color)',
+                              fontSize: '1.8rem',
+                              transition: 'all 0.15s'
+                            }} />
+                          </button>
+                        ))}
+                        <span style={{ alignSelf: 'center', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                          {['','Poor','Fair','Good','Very Good','Excellent'][hoverRating || ratingInput]}
+                        </span>
+                      </div>
+                    </div>
 
-                <div className="form-group">
-                  <label className="form-label">Review Comment</label>
-                  <textarea
-                    rows={4}
-                    placeholder="Share your feedback on product authenticity, wiring safety, and delivery..."
-                    value={commentInput}
-                    onChange={(e) => setCommentInput(e.target.value)}
-                    className="form-textarea"
-                    required
-                  />
+                    <div className="form-group">
+                      <label className="form-label">Your Review</label>
+                      <textarea
+                        rows={4}
+                        placeholder="Share your experience — product quality, wiring safety, delivery speed..."
+                        value={commentInput}
+                        onChange={(e) => setCommentInput(e.target.value)}
+                        className="form-textarea"
+                        required
+                        style={{ resize: 'vertical' }}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={reviewSubmitting}
+                      className="btn btn-primary"
+                      style={{ width: '100%', marginTop: '10px' }}
+                    >
+                      {reviewSubmitting ? 'Posting...' : '⭐ Submit Verified Review'}
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-secondary)' }}>
+                  <FiShield style={{ fontSize: '2rem', marginBottom: '8px', color: 'var(--primary-blue)', opacity: 0.6 }} />
+                  <div style={{ fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>Verified Purchase Only</div>
+                  <p style={{ fontSize: '0.85rem', lineHeight: '1.5' }}>
+                    Only customers who have purchased and received this product can leave a review. This ensures all reviews are genuine.
+                  </p>
                 </div>
-
-                <button
-                  type="submit"
-                  disabled={reviewSubmitting}
-                  className="btn btn-primary"
-                  style={{ width: '100%', marginTop: '10px' }}
-                >
-                  {reviewSubmitting ? 'Posting...' : 'Submit Review'}
-                </button>
-              </form>
+              )}
             </div>
           </div>
         </div>

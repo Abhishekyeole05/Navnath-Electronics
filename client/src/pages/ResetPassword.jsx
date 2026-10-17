@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { FiLock, FiEye, FiEyeOff, FiCheckCircle, FiAlertCircle, FiArrowLeft, FiShield } from 'react-icons/fi';
 
 const ResetPassword = () => {
   const { token } = useParams();
@@ -7,6 +8,8 @@ const ResetPassword = () => {
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,7 +21,7 @@ const ResetPassword = () => {
     setError('');
 
     if (!password || !confirmPassword) {
-      setError('Please enter both passwords.');
+      setError('Please enter both password fields.');
       return;
     }
 
@@ -35,32 +38,29 @@ const ResetPassword = () => {
     try {
       setLoading(true);
 
-      const response = await fetch(
-        `http://localhost:5000/api/auth/reset-password/${token}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ password })
-        }
-      );
+      const response = await fetch(`/api/auth/reset-password/${token}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ password })
+      });
 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        setError(data.message || 'Unable to reset password.');
+        setError(data.message || 'Unable to reset password. The link may be expired.');
         return;
       }
 
-      setMessage('Password reset successfully! Redirecting to login...');
+      setMessage('Password reset successfully! Redirecting you to login...');
 
       setTimeout(() => {
         navigate('/login');
       }, 2000);
 
     } catch (err) {
-      setError('Unable to connect to the server.');
+      setError('Unable to connect to the backend server. Please check your connection.');
     } finally {
       setLoading(false);
     }
@@ -69,113 +69,166 @@ const ResetPassword = () => {
   return (
     <div
       style={{
-        minHeight: '70vh',
+        backgroundColor: 'var(--bg-main)',
+        minHeight: '80vh',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        padding: '40px 20px'
+        padding: '50px 20px'
       }}
     >
       <div
         style={{
           width: '100%',
-          maxWidth: '450px',
-          padding: '30px',
-          borderRadius: '12px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-          background: '#fff'
+          maxWidth: '480px',
+          padding: '36px',
+          borderRadius: '20px',
+          border: '1px solid var(--border-color)',
+          boxShadow: 'var(--card-shadow)',
+          background: 'var(--bg-card)'
         }}
       >
-        <h2 style={{ textAlign: 'center', marginBottom: '10px' }}>
-          Reset Password
-        </h2>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <div
+            style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              color: 'var(--success)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.5rem',
+              marginBottom: '14px'
+            }}
+          >
+            <FiShield />
+          </div>
+          <h1 style={{ fontSize: '1.75rem', marginBottom: '8px', color: 'var(--text-primary)' }}>
+            Reset Password
+          </h1>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+            Create a secure new password for your New Navnath account.
+          </p>
+        </div>
 
-        <p style={{ textAlign: 'center', color: '#666', marginBottom: '25px' }}>
-          Enter your new password below.
-        </p>
+        {error && (
+          <div
+            style={{
+              backgroundColor: '#FEF2F2',
+              border: '1px solid #FCA5A5',
+              color: '#991B1B',
+              borderRadius: '10px',
+              padding: '12px 16px',
+              marginBottom: '20px',
+              fontSize: '0.88rem',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}
+          >
+            <FiAlertCircle style={{ flexShrink: 0, fontSize: '1.1rem' }} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {message && (
+          <div
+            style={{
+              backgroundColor: '#F0FDF4',
+              border: '1px solid #86EFAC',
+              color: '#166534',
+              borderRadius: '10px',
+              padding: '14px 16px',
+              marginBottom: '20px',
+              fontSize: '0.88rem',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}
+          >
+            <FiCheckCircle style={{ color: '#16A34A', fontSize: '1.2rem', flexShrink: 0 }} />
+            <span>{message}</span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '18px' }}>
-            <label
-              style={{
-                display: 'block',
-                marginBottom: '7px',
-                fontWeight: '500'
-              }}
-            >
-              New Password
-            </label>
-
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter new password"
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #ccc',
-                borderRadius: '6px',
-                boxSizing: 'border-box'
-              }}
-            />
+          <div className="form-group">
+            <label className="form-label">New Password (Min 6 characters) *</label>
+            <div className="password-wrapper">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter new password"
+                className="form-input"
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
           </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <label
-              style={{
-                display: 'block',
-                marginBottom: '7px',
-                fontWeight: '500'
-              }}
-            >
-              Confirm Password
-            </label>
-
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm new password"
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #ccc',
-                borderRadius: '6px',
-                boxSizing: 'border-box'
-              }}
-            />
+          <div className="form-group">
+            <label className="form-label">Confirm New Password *</label>
+            <div className="password-wrapper">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter new password"
+                className="form-input"
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+              >
+                {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+              </button>
+            </div>
           </div>
-
-          {error && (
-            <p style={{ color: 'red', marginBottom: '15px' }}>
-              {error}
-            </p>
-          )}
-
-          {message && (
-            <p style={{ color: 'green', marginBottom: '15px' }}>
-              {message}
-            </p>
-          )}
 
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: '100%',
-              padding: '12px',
-              border: 'none',
-              borderRadius: '6px',
-              background: '#2563eb',
-              color: '#fff',
-              fontSize: '16px',
-              cursor: loading ? 'not-allowed' : 'pointer'
-            }}
+            className="btn btn-primary"
+            style={{ width: '100%', padding: '14px', fontSize: '1rem', marginTop: '12px' }}
           >
-            {loading ? 'Resetting...' : 'Reset Password'}
+            {loading ? 'Updating Password...' : 'Save New Password'}
           </button>
         </form>
+
+        <div style={{ textAlign: 'center', marginTop: '24px' }}>
+          <Link
+            to="/login"
+            style={{
+              color: 'var(--primary-blue)',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              textDecoration: 'none'
+            }}
+          >
+            <FiArrowLeft />
+            <span>Back to Login</span>
+          </Link>
+        </div>
       </div>
     </div>
   );

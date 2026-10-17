@@ -1,51 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiMail, FiLock, FiLogOut, FiZap, FiArrowRight, FiCheckCircle } from 'react-icons/fi';
+import { FiMail, FiLock, FiLogOut, FiZap, FiArrowRight, FiCheckCircle, FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Login = ({ onToast }) => {
-  const { login, loginAsDemoAdmin, loginAsDemoCustomer } = useAuth();
+  const { user, login, loginAsDemoAdmin, loginAsDemoCustomer } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      navigate(user.role === 'admin' ? '/admin' : '/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  if (user) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) return;
     setLoading(true);
+    setError('');
     const result = await login(email, password);
     setLoading(false);
     if (result.success) {
       if (onToast) onToast('Signed in successfully!', 'success');
       navigate('/dashboard');
     } else {
-      if (onToast) onToast(result.message || 'Login failed. Please check credentials.', 'error');
+      const errorMsg = result.message || 'Invalid email or password. Please check your credentials.';
+      setError(errorMsg);
+      if (onToast) onToast(errorMsg, 'error');
     }
   };
 
   const handleDemoAdmin = async () => {
     setLoading(true);
+    setError('');
     const result = await loginAsDemoAdmin();
     setLoading(false);
     if (result.success) {
       if (onToast) onToast('Welcome, Administrator!', 'success');
       navigate('/admin');
     } else {
-      if (onToast) onToast('Demo admin sign in failed', 'error');
+      const errorMsg = result.message || 'Demo admin sign in failed';
+      setError(errorMsg);
+      if (onToast) onToast(errorMsg, 'error');
     }
   };
 
   const handleDemoCustomer = async () => {
     setLoading(true);
+    setError('');
     const result = await loginAsDemoCustomer();
     setLoading(false);
     if (result.success) {
       if (onToast) onToast('Welcome to New Navnath Electricals!', 'success');
       navigate('/dashboard');
     } else {
-      if (onToast) onToast('Demo customer sign in failed', 'error');
+      const errorMsg = result.message || 'Demo customer sign in failed';
+      setError(errorMsg);
+      if (onToast) onToast(errorMsg, 'error');
     }
   };
 
@@ -71,6 +90,25 @@ const Login = ({ onToast }) => {
             </p>
           </div>
 
+          {error && (
+            <div style={{
+              backgroundColor: '#FEF2F2',
+              border: '1px solid #FCA5A5',
+              color: '#991B1B',
+              borderRadius: '10px',
+              padding: '12px 16px',
+              marginBottom: '20px',
+              fontSize: '0.88rem',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <span>⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
+
           {/* Form */}
           <form onSubmit={handleSubmit}>
             <div className="form-group">
@@ -87,14 +125,25 @@ const Login = ({ onToast }) => {
 
             <div className="form-group">
               <label className="form-label">Password</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="form-input"
-                placeholder="••••••••"
-              />
+              <div className="password-wrapper">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="form-input"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
             </div>
             <div style={{ textAlign: 'right', marginTop: '-4px', marginBottom: '8px' }}>
   <Link

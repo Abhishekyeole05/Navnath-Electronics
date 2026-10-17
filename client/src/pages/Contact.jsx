@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { FiMapPin, FiPhone, FiMail, FiClock, FiSend, FiCheckCircle } from 'react-icons/fi';
 
 const Contact = ({ onToast }) => {
@@ -10,16 +11,27 @@ const Contact = ({ onToast }) => {
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.phone || !formData.message) {
       if (onToast) onToast('Please fill all required fields', 'warning');
       return;
     }
-    setSubmitted(true);
-    if (onToast) onToast('Inquiry submitted! Our store manager will call you within 1 hour.', 'success');
-    setFormData({ name: '', phone: '', email: '', subject: 'General Product Inquiry', message: '' });
+    setSubmitting(true);
+    try {
+      const res = await axios.post('/api/contact', formData);
+      if (res.data.success) {
+        setSubmitted(true);
+        if (onToast) onToast('Inquiry submitted! Our store manager will call you within 1 hour.', 'success');
+        setFormData({ name: '', phone: '', email: '', subject: 'General Product Inquiry', message: '' });
+      }
+    } catch (err) {
+      if (onToast) onToast('Failed to submit inquiry. Please call us directly.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

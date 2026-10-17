@@ -1,25 +1,47 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
+  const { user, token } = useAuth();
+
   const [cartItems, setCartItems] = useState(() => {
     const saved = localStorage.getItem('navnath_cart');
-    return saved ? JSON.parse(saved) : [];
+    const tokenExists = localStorage.getItem('navnath_token');
+    return saved && tokenExists ? JSON.parse(saved) : [];
   });
 
   const [coupon, setCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
 
+  // Clear cart when user logs out
   useEffect(() => {
-    localStorage.setItem('navnath_cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+    if (!user && !token) {
+      setCartItems([]);
+      setCoupon(null);
+      setDiscountAmount(0);
+      localStorage.removeItem('navnath_cart');
+    }
+  }, [user, token]);
+
+  useEffect(() => {
+    if (user || token) {
+      localStorage.setItem('navnath_cart', JSON.stringify(cartItems));
+    } else {
+      localStorage.removeItem('navnath_cart');
+    }
+  }, [cartItems, user, token]);
 
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
   const totalAmount = Math.max(0, subtotal - discountAmount);
 
   const addToCart = (product, quantity = 1) => {
+    if (!user && !token) {
+      return { success: false, requireAuth: true, message: 'Please sign in to add products to your cart.' };
+    }
+
     setCartItems(prev => {
       const existingIdx = prev.findIndex(item => (item._id || item.id) === (product._id || product.id));
       if (existingIdx > -1) {
@@ -38,6 +60,8 @@ export const CartProvider = ({ children }) => {
         quantity
       }];
     });
+
+    return { success: true };
   };
 
   const updateQuantity = (productId, newQty) => {

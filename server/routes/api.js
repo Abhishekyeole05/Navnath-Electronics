@@ -27,6 +27,9 @@ router.get('/products', productController.getProducts);
 router.get('/products/brands', productController.getAllBrands);
 router.get('/products/:id', productController.getProductById);
 router.post('/products/:productId/reviews', protect, productController.addReview);
+router.get('/products/:productId/reviews', productController.getProductReviews);
+router.get('/reviews/my-reviews', protect, productController.getMyReviews);
+router.get('/reviews/can-review/:productId', protect, productController.canReviewProduct);
 router.get('/categories', serviceController.getCategories);
 
 // ==========================================
@@ -48,6 +51,7 @@ router.get('/orders/:id', orderController.getOrderById);
 router.put('/orders/:id/cancel', protect, orderController.cancelOrder);
 router.put('/orders/:id/pay', orderController.updateOrderToPaid);
 router.post('/coupons/apply', orderController.applyCoupon);
+router.post('/contact', serviceController.handleContactInquiry);
 
 // ==========================================
 // Payment Routes (Razorpay & UPI QR)

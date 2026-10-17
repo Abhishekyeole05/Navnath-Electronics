@@ -199,6 +199,45 @@ button, input, select, textarea {
   box-shadow: 0 0 0 3px rgba(11, 61, 145, 0.15);
 }
 
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-wrapper .form-input {
+  padding-right: 44px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 6px;
+  font-size: 1.15rem;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  z-index: 2;
+}
+
+.password-toggle-btn:hover {
+  color: var(--primary-blue);
+  background-color: var(--bg-secondary);
+}
+
+.password-toggle-btn:focus-visible {
+  outline: 2px solid var(--primary-blue);
+}
+
 /* Badges & Tags */
 .badge {
   display: inline-block;
