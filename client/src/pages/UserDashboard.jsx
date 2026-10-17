@@ -7,7 +7,8 @@ import { useWishlist } from '../context/WishlistContext';
 import ProductCard from '../components/common/ProductCard';
 import { 
   FiPackage, FiCalendar, FiHeart, FiShoppingCart, FiUser, FiLogOut, 
-  FiCheckCircle, FiClock, FiAlertCircle, FiTrash2, FiArrowRight, FiZap
+  FiCheckCircle, FiClock, FiAlertCircle, FiTrash2, FiArrowRight, FiZap,
+  FiStar, FiMessageSquare, FiX
 } from 'react-icons/fi';
 
 const UserDashboard = ({ onToast }) => {
@@ -23,6 +24,17 @@ const UserDashboard = ({ onToast }) => {
   const [bookings, setBookings] = useState([]);
   const [wishlistProducts, setWishlistProducts] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [myReviews, setMyReviews] = useState([]);
+
+  // Feedback modal state
+  const [feedbackModal, setFeedbackModal] = useState(null); // { orderId, items }
+  const [feedbackProductId, setFeedbackProductId] = useState('');
+  const [feedbackProductName, setFeedbackProductName] = useState('');
+  const [feedbackRating, setFeedbackRating] = useState(5);
+  const [feedbackHoverRating, setFeedbackHoverRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+  const [reviewedProducts, setReviewedProducts] = useState(new Set());
 
   useEffect(() => {
     const tabParam = queryParams.get('tab');
@@ -34,12 +46,17 @@ const UserDashboard = ({ onToast }) => {
     const fetchUserData = async () => {
       setLoadingData(true);
       try {
-        const [ordRes, bookRes] = await Promise.all([
+        const [ordRes, bookRes, revRes] = await Promise.all([
           axios.get('/api/orders/myorders').catch(() => ({ data: { success: false, orders: [] } })),
-          axios.get('/api/services/mybookings').catch(() => ({ data: { success: false, bookings: [] } }))
+          axios.get('/api/services/mybookings').catch(() => ({ data: { success: false, bookings: [] } })),
+          axios.get('/api/reviews/my-reviews').catch(() => ({ data: { success: false, reviews: [] } }))
         ]);
         if (ordRes.data.success) setOrders(ordRes.data.orders);
         if (bookRes.data.success) setBookings(bookRes.data.bookings);
+        if (revRes.data.success) {
+          setMyReviews(revRes.data.reviews);
+          setReviewedProducts(new Set(revRes.data.reviews.map(r => String(r.productId))));
+        }
 
         // Fetch Wishlist products
         if (wishlist.length > 0) {
@@ -81,6 +98,46 @@ const UserDashboard = ({ onToast }) => {
       return <span className="badge badge-green">{status}</span>;
     }
     return <span className="badge badge-yellow">{status}</span>;
+  };
+
+  const handleFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    if (!feedbackComment.trim() || !feedbackProductId) return;
+    setFeedbackSubmitting(true);
+    try {
+      const res = await axios.post(`/api/products/${feedbackProductId}/reviews`, {
+        rating: feedbackRating,
+        comment: feedbackComment
+      });
+      if (res.data.success) {
+        setReviewedProducts(prev => new Set([...prev, String(feedbackProductId)]));
+        setMyReviews(prev => [res.data.review, ...prev]);
+        setFeedbackModal(null);
+        setFeedbackComment('');
+        setFeedbackRating(5);
+        if (onToast) onToast('Thank you! Your review has been posted.', 'success');
+      }
+    } catch (err) {
+      const msg = err?.response?.data?.message || 'Failed to submit review';
+      if (onToast) onToast(msg, 'error');
+    } finally {
+      setFeedbackSubmitting(false);
+    }
+  };
+
+  const openFeedbackModal = (order) => {
+    const items = order.items || order.orderItems || [];
+    if (items.length === 1) {
+      const item = items[0];
+      setFeedbackProductId(item.productId || '');
+      setFeedbackProductName(item.name || 'Product');
+    } else {
+      setFeedbackProductId(items[0]?.productId || '');
+      setFeedbackProductName(items[0]?.name || 'Product');
+    }
+    setFeedbackRating(5);
+    setFeedbackComment('');
+    setFeedbackModal({ orderId: order.orderId || order._id, items });
   };
 
   return (
@@ -205,6 +262,25 @@ const UserDashboard = ({ onToast }) => {
                 }}
               >
                 <FiHeart /> Wishlist ({wishlist.length})
+              </button>
+
+              <button
+                onClick={() => setActiveTab('reviews')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  backgroundColor: activeTab === 'reviews' ? 'var(--primary-blue)' : 'transparent',
+                  color: activeTab === 'reviews' ? '#FFFFFF' : 'var(--text-primary)',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  textAlign: 'left'
+                }}
+              >
+                <FiStar /> My Reviews ({myReviews.length})
               </button>
 
               {user.role === 'admin' && (
@@ -430,9 +506,36 @@ const UserDashboard = ({ onToast }) => {
                                 Payment: {ord.paymentMethod ? ord.paymentMethod.toUpperCase() : 'COD'} ({ord.paymentStatus || 'Pending'})
                               </span>
                             </div>
-                            <Link to={`/order-success/${orderCode}`} className="btn btn-outline btn-sm">
-                              View Receipt / Invoice
-                            </Link>
+                            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                              {/* Feedback Button for Delivered Orders */}
+                              {status.toLowerCase() === 'delivered' && (() => {
+                                const orderItems = ord.items || ord.orderItems || [];
+                                const allReviewed = orderItems.every(item =>
+                                  reviewedProducts.has(String(item.productId || ''))
+                                );
+                                return allReviewed ? (
+                                  <span style={{
+                                    display: 'flex', alignItems: 'center', gap: '6px',
+                                    padding: '7px 14px', borderRadius: '8px',
+                                    backgroundColor: 'rgba(16,185,129,0.12)',
+                                    color: 'var(--success)', fontWeight: 700, fontSize: '0.85rem'
+                                  }}>
+                                    <FiCheckCircle /> Reviewed ✓
+                                  </span>
+                                ) : (
+                                  <button
+                                    onClick={() => openFeedbackModal(ord)}
+                                    className="btn btn-outline btn-sm"
+                                    style={{ borderColor: 'var(--accent-yellow)', color: 'var(--accent-yellow)', display: 'flex', alignItems: 'center', gap: '6px' }}
+                                  >
+                                    <FiStar /> Leave Feedback
+                                  </button>
+                                );
+                              })()}
+                              <Link to={`/order-success/${orderCode}`} className="btn btn-outline btn-sm">
+                                View Receipt / Invoice
+                              </Link>
+                            </div>
                           </div>
                         </div>
                       );
@@ -521,9 +624,203 @@ const UserDashboard = ({ onToast }) => {
                 )}
               </div>
             )}
+
+            {/* 5. MY REVIEWS TAB */}
+            {activeTab === 'reviews' && (
+              <div style={{
+                backgroundColor: 'var(--bg-card)',
+                borderRadius: '16px',
+                border: '1px solid var(--border-color)',
+                padding: '28px',
+                boxShadow: 'var(--card-shadow)'
+              }}>
+                <h2 style={{ fontSize: '1.4rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <FiStar style={{ color: 'var(--accent-yellow)' }} /> My Reviews & Feedback ({myReviews.length})
+                </h2>
+
+                {myReviews.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
+                    <FiMessageSquare style={{ fontSize: '3rem', marginBottom: '12px', opacity: 0.4 }} />
+                    <div>You haven't left any reviews yet.</div>
+                    <div style={{ marginTop: '8px', fontSize: '0.9rem' }}>Reviews can be left after a product is delivered.</div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                    {myReviews.map((rev, i) => (
+                      <div key={rev._id || i} style={{
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '12px',
+                        padding: '18px 20px',
+                        backgroundColor: 'var(--bg-secondary)'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                              {rev.productName || 'Product Review'}
+                            </div>
+                            <div style={{ display: 'flex', gap: '3px', marginBottom: '6px' }}>
+                              {[1,2,3,4,5].map(n => (
+                                <FiStar key={n} style={{
+                                  fill: n <= rev.rating ? 'var(--accent-yellow)' : 'none',
+                                  color: n <= rev.rating ? 'var(--accent-yellow)' : 'var(--border-color)',
+                                  fontSize: '1rem'
+                                }} />
+                              ))}
+                              <span style={{ marginLeft: '6px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{rev.rating}/5</span>
+                            </div>
+                          </div>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{rev.date || new Date(rev.createdAt).toLocaleDateString('en-IN')}</span>
+                        </div>
+                        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
+                          &quot;{rev.comment}&quot;
+                        </p>
+                        <div style={{ marginTop: '8px' }}>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--success)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <FiCheckCircle /> Verified Purchase Review
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </main>
         </div>
       </div>
+
+      {/* Feedback Modal Overlay */}
+      {feedbackModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          backgroundColor: 'rgba(0,0,0,0.6)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '20px'
+        }} onClick={() => setFeedbackModal(null)}>
+          <div
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              borderRadius: '20px',
+              border: '1px solid var(--border-color)',
+              padding: '36px',
+              maxWidth: '520px',
+              width: '100%',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
+              position: 'relative'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Close */}
+            <button
+              onClick={() => setFeedbackModal(null)}
+              style={{
+                position: 'absolute', top: '16px', right: '16px',
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: '1.4rem', color: 'var(--text-secondary)'
+              }}
+            ><FiX /></button>
+
+            <h3 style={{ fontSize: '1.3rem', marginBottom: '6px', color: 'var(--text-primary)' }}>
+              Leave Feedback
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '24px' }}>
+              Order #{feedbackModal.orderId}
+            </p>
+
+            {/* Product Selector (if multiple items) */}
+            {feedbackModal.items.length > 1 && (
+              <div className="form-group" style={{ marginBottom: '20px' }}>
+                <label className="form-label">Select Product to Review</label>
+                <select
+                  className="form-select"
+                  value={feedbackProductId}
+                  onChange={e => {
+                    const selected = feedbackModal.items.find(it => it.productId === e.target.value);
+                    setFeedbackProductId(e.target.value);
+                    setFeedbackProductName(selected?.name || 'Product');
+                  }}
+                >
+                  {feedbackModal.items.map((item, i) => (
+                    <option key={i} value={item.productId || ''}>{item.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {feedbackModal.items.length === 1 && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '12px',
+                backgroundColor: 'var(--bg-secondary)', padding: '12px 16px',
+                borderRadius: '10px', marginBottom: '20px'
+              }}>
+                <img
+                  src={feedbackModal.items[0].image || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=400&q=80'}
+                  alt=""
+                  style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover' }}
+                />
+                <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{feedbackProductName}</div>
+              </div>
+            )}
+
+            <form onSubmit={handleFeedbackSubmit}>
+              {/* Star Rating */}
+              <div className="form-group" style={{ marginBottom: '20px' }}>
+                <label className="form-label">Your Rating</label>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setFeedbackRating(star)}
+                      onMouseEnter={() => setFeedbackHoverRating(star)}
+                      onMouseLeave={() => setFeedbackHoverRating(0)}
+                      style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        fontSize: '2rem', padding: '2px',
+                        transition: 'transform 0.15s'
+                      }}
+                    >
+                      <FiStar style={{
+                        fill: star <= (feedbackHoverRating || feedbackRating) ? 'var(--accent-yellow)' : 'none',
+                        color: star <= (feedbackHoverRating || feedbackRating) ? 'var(--accent-yellow)' : 'var(--border-color)',
+                        fontSize: '2rem',
+                        transition: 'all 0.15s'
+                      }} />
+                    </button>
+                  ))}
+                  <span style={{ alignSelf: 'center', fontWeight: 700, fontSize: '1rem', color: 'var(--text-secondary)', marginLeft: '8px' }}>
+                    {['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][feedbackHoverRating || feedbackRating]}
+                  </span>
+                </div>
+              </div>
+
+              {/* Comment */}
+              <div className="form-group" style={{ marginBottom: '24px' }}>
+                <label className="form-label">Your Review</label>
+                <textarea
+                  rows={4}
+                  className="form-textarea"
+                  placeholder="How was the product quality? Was delivery on time? Would you recommend it?"
+                  value={feedbackComment}
+                  onChange={e => setFeedbackComment(e.target.value)}
+                  required
+                  style={{ resize: 'vertical' }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={feedbackSubmitting || !feedbackComment.trim()}
+                className="btn btn-primary"
+                style={{ width: '100%', padding: '14px', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              >
+                <FiStar />
+                {feedbackSubmitting ? 'Posting Review...' : 'Submit Review'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

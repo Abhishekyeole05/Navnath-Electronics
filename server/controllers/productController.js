@@ -1,4 +1,4 @@
-const { Product, Category, Review, dbHelper } = require('../models');
+const { Product, Category, Review, Order, dbHelper } = require('../models');
 
 exports.getProducts = async (req, res) => {
   try {
@@ -140,5 +140,62 @@ exports.getAllBrands = async (req, res) => {
     res.json({ success: true, brands });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to fetch brands' });
+  }
+};
+
+exports.getProductReviews = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const allReviews = await dbHelper.find('reviews', Review);
+    const reviews = allReviews
+      .filter(r => String(r.productId) === String(productId))
+      .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+    res.json({ success: true, reviews });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch reviews' });
+  }
+};
+
+exports.getMyReviews = async (req, res) => {
+  try {
+    const allReviews = await dbHelper.find('reviews', Review);
+    const myReviews = allReviews.filter(r => String(r.userId) === String(req.user.id));
+    res.json({ success: true, reviews: myReviews });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch your reviews' });
+  }
+};
+
+exports.canReviewProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const userId = req.user.id;
+
+    // Check if user has a delivered order containing this product
+    const allOrders = await dbHelper.find('orders', Order, { userId });
+    const hasDeliveredOrder = allOrders.some(order => {
+      const isDelivered = (order.orderStatus || '').toLowerCase() === 'delivered';
+      if (!isDelivered) return false;
+      const items = order.items || order.orderItems || [];
+      return items.some(item => {
+        const pid = String(item.productId || item.product || item._id || item.id || '');
+        return pid === String(productId) || pid.includes(String(productId)) || String(productId).includes(pid);
+      });
+    });
+
+    // Check if user already reviewed this product
+    const allReviews = await dbHelper.find('reviews', Review);
+    const alreadyReviewed = allReviews.some(
+      r => String(r.userId) === String(userId) && String(r.productId) === String(productId)
+    );
+
+    res.json({
+      success: true,
+      canReview: hasDeliveredOrder && !alreadyReviewed,
+      hasDeliveredOrder,
+      alreadyReviewed
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to check review eligibility' });
   }
 };
