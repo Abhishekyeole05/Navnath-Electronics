@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FiPhoneCall, FiZap, FiArrowRight } from 'react-icons/fi';
+import { useLanguage } from '../../context/LanguageContext';
 
 const CallToAction = () => {
+  const { t } = useLanguage();
   return (
     <section style={{
       padding: '70px 0',
@@ -31,15 +33,15 @@ const CallToAction = () => {
             fontWeight: 800,
             marginBottom: '16px'
           }}>
-            <FiZap /> NEED EMERGENCY ELECTRICIAN OR BULK WIRING?
+            <FiZap /> {t('cta_badge', 'NEED EMERGENCY ELECTRICIAN OR BULK WIRING?')}
           </div>
 
           <h2 style={{ fontSize: '2.4rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '14px', lineHeight: '1.25' }}>
-            Get Same-Day Service & Wholesale Contractor Rates
+            {t('cta_heading', 'Get Same-Day Service & Wholesale Contractor Rates')}
           </h2>
 
           <p style={{ fontSize: '1.05rem', color: '#CBD5E1', lineHeight: '1.6' }}>
-            Have a project in Manmad? Call Mayur Dadaji Chaudhari or book a licensed technician home visit in under 60 seconds.
+            {t('cta_desc', 'Have a project in Manmad? Call Mayur Dadaji Chaudhari or book a licensed technician home visit in under 60 seconds.')}
           </p>
         </div>
 
@@ -49,7 +51,7 @@ const CallToAction = () => {
             className="btn btn-accent"
             style={{ padding: '14px 28px', fontSize: '1.02rem', borderRadius: '10px' }}
           >
-            Book Technician (₹299) <FiArrowRight />
+            {t('cta_book_btn', 'Book Technician (₹299)')} <FiArrowRight />
           </Link>
 
           <a

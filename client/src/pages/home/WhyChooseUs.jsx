@@ -1,5 +1,6 @@
 import React from 'react';
 import { FiShield, FiTruck, FiAward, FiTool, FiClock, FiCheckSquare } from 'react-icons/fi';
+import { useLanguage } from '../../context/LanguageContext';
 
 const features = [
   {
@@ -35,18 +36,19 @@ const features = [
 ];
 
 const WhyChooseUs = () => {
+  const { t, tWhyChooseUsItem } = useLanguage();
   return (
     <section style={{ padding: '80px 0', backgroundColor: 'var(--bg-main)' }}>
       <div className="container">
         <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 50px' }}>
           <span className="badge badge-blue" style={{ marginBottom: '10px' }}>
-            WHY WE ARE #1 IN NASHIK
+            {t('why_choose_badge', 'WHY WE ARE #1 IN MANMAD')}
           </span>
           <h2 style={{ fontSize: '2.3rem', marginBottom: '16px', color: 'var(--text-primary)' }}>
-            Why Customers Choose New Navnath
+            {t('why_choose_heading', 'Why Customers Choose New Navnath')}
           </h2>
           <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-            For over 15 years, households and industrial engineers have relied on us for unmatched electrical safety, wholesale prices, and reliable technical service.
+            {t('why_choose_desc', 'For over 15 years, households, farmers, and industrial contractors have relied on us for unmatched electrical safety, wholesale prices, and reliable technical service.')}
           </p>
         </div>
 
@@ -55,7 +57,9 @@ const WhyChooseUs = () => {
           gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
           gap: '28px'
         }}>
-          {features.map((feat, i) => (
+          {features.map((defaultFeat, i) => {
+            const feat = tWhyChooseUsItem ? tWhyChooseUsItem(i, defaultFeat) : defaultFeat;
+            return (
             <div
               key={i}
               style={{
@@ -104,7 +108,8 @@ const WhyChooseUs = () => {
                 </p>
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       </div>
     </section>

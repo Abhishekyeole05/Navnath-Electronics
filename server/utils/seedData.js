@@ -1,5 +1,5 @@
 const { 
-  User, Product, Category, Service, Booking, Order, Coupon, Review, dbHelper 
+  User, Product, Category, Service, Booking, Worker, Order, Coupon, Review, dbHelper 
 } = require('../models');
 const { getUseMemoryStore, memoryStore } = require('../config/db');
 const bcrypt = require('bcryptjs');
@@ -343,74 +343,78 @@ const initialProducts = [
 
 const initialServices = [
   {
-    title: 'Home Electrical Repair & Fault Diagnosis',
-    slug: 'home-electrical-repair',
-    category: 'Home Electrical Repair',
-    priceEstimate: '₹299 onwards',
-    description: 'Comprehensive troubleshooting of power trips, short circuits, switchboard sparks, and domestic wiring faults by certified technicians.',
+    title: 'Install Electrical Systems',
+    slug: 'install-electrical-systems',
+    category: 'Installation',
+    priceEstimate: '₹699 onwards',
+    description: 'Professional installation of new electrical setups, distribution boards, wiring conduits, switches, lighting systems, inverters, and heavy machinery connections.',
     icon: 'FiTool',
-    duration: '1-2 Hours',
-    features: ['Fault tracking & isolation', 'Switch & socket repair', 'Complete safety check', '30-Day Service Warranty']
+    duration: '2-4 Hours',
+    features: [
+      'New home & commercial wiring installation',
+      'Distribution board (DB) & MCB installation',
+      'Appliance & heavy load connections',
+      'Certified electrician with post-installation check'
+    ]
   },
   {
-    title: 'Motor Installation & Alignment',
-    slug: 'motor-installation',
-    category: 'Motor Installation',
-    priceEstimate: '₹799 onwards',
-    description: 'Professional mechanical alignment and electrical wiring for agricultural, domestic, and commercial electric motors.',
-    icon: 'FiSliders',
-    duration: '2-3 Hours',
-    features: ['Laser/mechanical alignment', 'Starter connection', 'Vibration test', 'Load balancing']
-  },
-  {
-    title: 'Submersible & Monoblock Pump Installation',
-    slug: 'pump-installation',
-    category: 'Pump Installation',
-    priceEstimate: '₹999 onwards',
-    description: 'Complete installation of borewell submersible pumps and monoblock water pumps including pipeline fitting and starter box wiring.',
-    icon: 'FiDroplet',
-    duration: '3-4 Hours',
-    features: ['Depth measurement & lowering', 'Waterproof cable jointing', 'Digital starter commissioning', 'Water flow test']
-  },
-  {
-    title: 'Industrial Three-Phase Wiring & Cable Pulling',
-    slug: 'industrial-wiring',
-    category: 'Industrial Wiring',
-    priceEstimate: '₹2,499 onwards',
-    description: 'Heavy industrial cable laying, armored wire routing, factory shed electrification, and machinery power line installations.',
-    icon: 'FiCpu',
-    duration: 'Full Day / Custom',
-    features: ['Armored cable glanding', 'Heavy duty earthing', 'Load distribution', 'Electrical inspector compliance']
-  },
-  {
-    title: 'Chandelier, LED Strip & Decorative Lighting Installation',
-    slug: 'lighting-installation',
-    category: 'Lighting Installation',
+    title: 'Maintain Electrical Systems',
+    slug: 'maintain-electrical-systems',
+    category: 'Maintenance',
     priceEstimate: '₹499 onwards',
-    description: 'Expert ceiling chandelier hanging, profile LED strip mounting, garden lighting, and commercial showroom lighting installation.',
-    icon: 'FiSun',
-    duration: '2 Hours',
-    features: ['Secure ceiling anchoring', 'Concealed wiring', 'Driver power supply setup', 'Dimmer/remote configuration']
-  },
-  {
-    title: 'Electrical Panel & Distribution Board Assembly',
-    slug: 'panel-installation',
-    category: 'Panel Installation',
-    priceEstimate: '₹1,499 onwards',
-    description: 'Custom assembly and installation of main distribution boards (DB), changeover switches, RCCB safety breakers, and sub-panels.',
-    icon: 'FiGrid',
-    duration: '3-5 Hours',
-    features: ['Neat wire dressing', 'MCB/RCCB load segregation', 'Voltage indicator lights', 'Safety labeling']
-  },
-  {
-    title: 'Annual Electrical Maintenance & Safety Audit',
-    slug: 'electrical-maintenance',
-    category: 'Electrical Maintenance',
-    priceEstimate: '₹1,999 / Year',
-    description: 'Preventive electrical maintenance for residential societies, shops, and workshops to prevent fire hazards and energy waste.',
+    description: 'Preventive and scheduled maintenance for residential, commercial, and industrial electrical systems to prevent fire hazards, loose connections, and power wastage.',
     icon: 'FiShield',
-    duration: 'Scheduled Visits',
-    features: ['Quarterly inspection', 'Earthing pit watering & testing', 'Thermal spark scan', 'Priority emergency repair']
+    duration: '1-3 Hours',
+    features: [
+      'Comprehensive switchboard & panel inspection',
+      'Thermal spark check & terminal tightening',
+      'Earthing health & load distribution audit',
+      'Preventive maintenance report & safety certification'
+    ]
+  },
+  {
+    title: 'Repair Electrical Systems',
+    slug: 'repair-electrical-systems',
+    category: 'Repair',
+    priceEstimate: '₹299 onwards',
+    description: 'Fast troubleshooting and emergency repair for short circuits, power trips, sparking switchboards, damaged cabling, and faulty electrical fixtures.',
+    icon: 'FiSliders',
+    duration: '1-2 Hours',
+    features: [
+      'Rapid fault identification & isolation',
+      'Burnt switch, socket & MCB repair/replacement',
+      'Short circuit resolution & emergency rewiring',
+      '30-Day service warranty on all repairs'
+    ]
+  },
+  {
+    title: 'Test Electrical Systems',
+    slug: 'test-electrical-systems',
+    category: 'Testing',
+    priceEstimate: '₹399 onwards',
+    description: 'Precision electrical testing including earthing resistance, phase voltage balance, insulation resistance (megger test), and statutory safety compliance checks.',
+    icon: 'FiCpu',
+    duration: '1-2 Hours',
+    features: [
+      'Earthing pit resistance & voltage drop measurement',
+      'Megger insulation resistance & leakage current test',
+      'Three-phase voltage & load balancing test',
+      'Detailed electrical inspection & compliance report'
+    ]
+  }
+];
+
+const initialWorkers = [
+  {
+    workerId: 'WRK-101',
+    name: 'Rajesh Sharma',
+    phone: '+91 98220 12345',
+    email: 'rajesh.electrician@navnath.com',
+    specialization: 'Master Electrician (Install, Maintain, Repair, Test)',
+    experience: '8+ Years',
+    status: 'Active',
+    rating: 4.9,
+    totalJobs: 42
   }
 ];
 
@@ -494,11 +498,41 @@ const seedDatabase = async () => {
       }
     }
 
-    // 3. Seed Services
-    for (const srv of initialServices) {
-      const exists = await dbHelper.findOne('services', Service, { slug: srv.slug });
-      if (!exists) {
-        await dbHelper.create('services', Service, srv);
+    // 3. Seed Services (ensuring only the 4 electrical systems services)
+    if (getUseMemoryStore()) {
+      memoryStore.services = initialServices.map(s => ({
+        _id: memoryStore.generateId(),
+        id: s.slug,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ...s
+      }));
+    } else {
+      for (const srv of initialServices) {
+        const exists = await dbHelper.findOne('services', Service, { slug: srv.slug });
+        if (!exists) {
+          await dbHelper.create('services', Service, srv);
+        }
+      }
+    }
+
+    // 3b. Seed Default Worker
+    if (getUseMemoryStore()) {
+      if (!memoryStore.workers || memoryStore.workers.length === 0) {
+        memoryStore.workers = initialWorkers.map(w => ({
+          _id: memoryStore.generateId(),
+          id: w.workerId,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          ...w
+        }));
+      }
+    } else {
+      for (const wrk of initialWorkers) {
+        const exists = await dbHelper.findOne('workers', Worker, { workerId: wrk.workerId });
+        if (!exists) {
+          await dbHelper.create('workers', Worker, wrk);
+        }
       }
     }
 

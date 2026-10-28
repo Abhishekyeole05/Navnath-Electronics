@@ -15,6 +15,7 @@ class MemoryStore {
     this.categories = [];
     this.services = [];
     this.bookings = [];
+    this.workers = [];
     this.orders = [];
     this.coupons = [];
     this.reviews = [];
@@ -37,6 +38,7 @@ class MemoryStore {
           this.categories = data.categories || [];
           this.services = data.services || [];
           this.bookings = data.bookings || [];
+          this.workers = data.workers || [];
           this.orders = data.orders || [];
           this.coupons = data.coupons || [];
           this.reviews = data.reviews || [];
@@ -62,6 +64,7 @@ class MemoryStore {
         categories: this.categories,
         services: this.services,
         bookings: this.bookings,
+        workers: this.workers,
         orders: this.orders,
         coupons: this.coupons,
         reviews: this.reviews
@@ -104,7 +107,7 @@ class MemoryStore {
 
   findById(collectionName, id) {
     const list = this.getCollection(collectionName);
-    return list.find(item => item._id === id || item.id === id) || null;
+    return list.find(item => item._id === id || item.id === id || item.workerId === id) || null;
   }
 
   create(collectionName, data) {
@@ -124,7 +127,7 @@ class MemoryStore {
 
   findByIdAndUpdate(collectionName, id, updateData) {
     const list = this.getCollection(collectionName);
-    const idx = list.findIndex(item => item._id === id || item.id === id);
+    const idx = list.findIndex(item => item._id === id || item.id === id || item.workerId === id);
     if (idx === -1) return null;
     const updated = {
       ...list[idx],
@@ -138,7 +141,7 @@ class MemoryStore {
 
   findByIdAndDelete(collectionName, id) {
     const list = this.getCollection(collectionName);
-    const idx = list.findIndex(item => item._id === id || item.id === id);
+    const idx = list.findIndex(item => item._id === id || item.id === id || item.workerId === id);
     if (idx === -1) return null;
     const deleted = list[idx];
     list.splice(idx, 1);
@@ -152,6 +155,7 @@ class MemoryStore {
     this.categories = [];
     this.services = [];
     this.bookings = [];
+    this.workers = [];
     this.orders = [];
     this.coupons = [];
     this.reviews = [];

@@ -30,7 +30,8 @@ const Login = ({ onToast }) => {
     setLoading(false);
     if (result.success) {
       if (onToast) onToast('Signed in successfully!', 'success');
-      navigate('/dashboard');
+      const target = result.user?.role === 'admin' ? '/admin' : '/dashboard';
+      navigate(target, { replace: true });
     } else {
       const errorMsg = result.message || 'Invalid email or password. Please check your credentials.';
       setError(errorMsg);
@@ -45,7 +46,7 @@ const Login = ({ onToast }) => {
     setLoading(false);
     if (result.success) {
       if (onToast) onToast('Welcome, Administrator!', 'success');
-      navigate('/admin');
+      navigate('/admin', { replace: true });
     } else {
       const errorMsg = result.message || 'Demo admin sign in failed';
       setError(errorMsg);
@@ -60,7 +61,7 @@ const Login = ({ onToast }) => {
     setLoading(false);
     if (result.success) {
       if (onToast) onToast('Welcome to New Navnath Electricals!', 'success');
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     } else {
       const errorMsg = result.message || 'Demo customer sign in failed';
       setError(errorMsg);
@@ -86,7 +87,7 @@ const Login = ({ onToast }) => {
               Sign In to Your Account
             </h1>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-              Track electrical orders, save addresses, and book home electrician visits.
+              Track electrical orders, manage services, and access store operations.
             </p>
           </div>
 
@@ -102,14 +103,12 @@ const Login = ({ onToast }) => {
               fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
-              gap: '10px'
+              gap: '8px'
             }}>
-              <span>⚠️</span>
               <span>{error}</span>
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label className="form-label">Email Address</label>
@@ -119,7 +118,7 @@ const Login = ({ onToast }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="form-input"
-                placeholder="you@example.com"
+                placeholder="admin@navnath.com or user@example.com"
               />
             </div>
 
@@ -145,19 +144,20 @@ const Login = ({ onToast }) => {
                 </button>
               </div>
             </div>
+
             <div style={{ textAlign: 'right', marginTop: '-4px', marginBottom: '8px' }}>
-  <Link
-    to="/forgot-password"
-    style={{
-      color: 'var(--primary-blue)',
-      fontSize: '0.85rem',
-      fontWeight: 600,
-      textDecoration: 'none'
-    }}
-  >
-    Forgot Password?
-  </Link>
-</div>
+              <Link
+                to="/forgot-password"
+                style={{
+                  color: 'var(--primary-blue)',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  textDecoration: 'none'
+                }}
+              >
+                Forgot Password?
+              </Link>
+            </div>
 
             <button
               type="submit"
@@ -177,10 +177,20 @@ const Login = ({ onToast }) => {
             textAlign: 'center'
           }}>
             <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '12px', letterSpacing: '0.5px' }}>
-              INSTANT DEMO CREDENTIALS (NO TYPING):
+              ONE-CLICK DEMO LOGINS:
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={handleDemoAdmin}
+                disabled={loading}
+                className="btn btn-accent"
+                style={{ width: '100%', padding: '12px', fontSize: '0.9rem', fontWeight: 700 }}
+              >
+                ⚡ 1-Click Admin Login (admin@navnath.com / admin123)
+              </button>
+
               <button
                 type="button"
                 onClick={handleDemoCustomer}
@@ -188,17 +198,7 @@ const Login = ({ onToast }) => {
                 className="btn btn-outline"
                 style={{ width: '100%', padding: '12px', fontSize: '0.9rem' }}
               >
-                Demo Customer Login (user@navnath.com)
-              </button>
-
-              <button
-                type="button"
-                onClick={handleDemoAdmin}
-                disabled={loading}
-                className="btn btn-accent"
-                style={{ width: '100%', padding: '12px', fontSize: '0.9rem' }}
-              >
-                ⚡ Demo Admin Login (admin@navnath.com)
+                Demo Customer Login (user@navnath.com / user123)
               </button>
             </div>
           </div>

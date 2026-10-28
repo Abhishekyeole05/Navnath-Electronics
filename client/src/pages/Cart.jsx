@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useLanguage } from '../context/LanguageContext';
 import { 
   FiTrash2, FiMinus, FiPlus, FiArrowRight, FiShoppingBag, 
   FiTag, FiCheckCircle, FiAlertCircle 
 } from 'react-icons/fi';
 
 const Cart = ({ onToast }) => {
+  const { t, tProduct } = useLanguage();
   const { 
     cartItems, subtotal, discountAmount, totalAmount, 
     coupon, updateQuantity, removeFromCart, clearCart, applyCouponCode 
@@ -48,13 +50,13 @@ const Cart = ({ onToast }) => {
             <FiShoppingBag />
           </div>
           <h1 style={{ fontSize: '2rem', marginBottom: '12px', color: 'var(--text-primary)' }}>
-            Your Cart is Empty
+            {t('cart_empty_title', 'Your Cart is Empty')}
           </h1>
           <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginBottom: '32px' }}>
-            Looks like you haven't added any electrical wires, modular switches, or LED batten lights yet.
+            {t('cart_empty_desc', "Looks like you haven't added any electrical wires, modular switches, or LED batten lights yet.")}
           </p>
           <Link to="/products" className="btn btn-primary" style={{ padding: '14px 32px' }}>
-            Explore Electrical Catalog
+            {t('cart_explore_btn', 'Explore Electrical Catalog')}
           </Link>
         </div>
       </div>
@@ -112,7 +114,7 @@ const Cart = ({ onToast }) => {
                 }}>
                   <img
                     src={item.image || 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=300&q=80'}
-                    alt={item.name}
+                    alt={tProduct(item.name)}
                     style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '10px' }}
                   />
 
@@ -276,7 +278,7 @@ const Cart = ({ onToast }) => {
               className="btn btn-accent"
               style={{ width: '100%', padding: '16px', fontSize: '1.05rem', borderRadius: '10px' }}
             >
-              Proceed to Checkout <FiArrowRight />
+              {t('proceed_to_checkout', 'Proceed to Checkout')} <FiArrowRight />
             </button>
           </div>
         </div>

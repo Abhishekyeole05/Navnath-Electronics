@@ -6,19 +6,33 @@ const { User, dbHelper } = require('../models');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'navnath_super_secret_jwt_key_2026';
 
-const emailTransporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+const validatePasswordStrength = (password) => {
+  if (!password || typeof password !== 'string') {
+    return { valid: false, message: 'Password is required.' };
   }
-});
+  if (password.length < 8) {
+    return { valid: false, message: 'Password must be at least 8 characters long.' };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, message: 'Password must contain at least one uppercase letter (A-Z).' };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, message: 'Password must contain at least one lowercase letter (a-z).' };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, message: 'Password must contain at least one number (0-9).' };
+  }
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password)) {
+    return { valid: false, message: 'Password must contain at least one special character (!@#$%^&*).' };
+  }
+  return { valid: true };
+};
 
 const generateToken = (user) => {
   return jwt.sign(
     { id: user._id || user.id, email: user.email, role: user.role, name: user.name },
     JWT_SECRET,
-    { expiresIn: '5m' }
+    { expiresIn: '7d' }
   );
 };
 
@@ -29,6 +43,11 @@ exports.register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide name, email, and password.' });
     }
 
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.valid) {
+      return res.status(400).json({ success: false, message: passwordValidation.message });
+    }
+
     email = email.trim().toLowerCase();
 
     const existingUser = await dbHelper.findOne('users', User, { email });
@@ -36,7 +55,6 @@ exports.register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'User with this email already exists.' });
     }
 
-    // Hash password before storing
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await dbHelper.create('users', User, {
@@ -82,17 +100,14 @@ exports.login = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
 
-    // Try bcrypt compare first (hashed passwords)
     let isMatch = false;
     const looksHashed = user.password && user.password.startsWith('$2');
 
     if (looksHashed) {
       isMatch = await bcrypt.compare(password, user.password);
     } else {
-      // Legacy plaintext password — compare directly
       isMatch = (user.password === password);
       if (isMatch) {
-        // Auto-rehash the legacy plaintext password on successful login
         const rehashed = await bcrypt.hash(password, 10);
         await dbHelper.findByIdAndUpdate('users', User, user._id || user.id, { password: rehashed });
       }
@@ -223,11 +238,12 @@ exports.forgotPassword = async (req, res) => {
 
     if (emailPass && emailPass.trim()) {
       try {
+        const cleanPass = emailPass.replace(/\s+/g, '');
         const transporter = nodemailer.createTransport({
           service: 'gmail',
           auth: {
             user: emailUser,
-            pass: emailPass.trim()
+            pass: cleanPass
           }
         });
 
@@ -251,6 +267,8 @@ exports.forgotPassword = async (req, res) => {
                   🔒 Reset My Password Now
                 </a>
               </div>
+              <p style="color: #64748b; font-size: 0.85rem;">Or copy and paste this link in your browser:</p>
+              <p style="font-size: 0.8rem; word-break: break-all; color: #2563eb;"><a href="${resetLink}">${resetLink}</a></p>
               <p style="color: #64748b; font-size: 0.85rem;">This link is secure and will expire in <strong>15 minutes</strong>.</p>
               <p style="color: #64748b; font-size: 0.85rem;">If you did not request a password reset, you can safely ignore this email.</p>
               <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0 16px;" />
@@ -269,24 +287,16 @@ exports.forgotPassword = async (req, res) => {
       console.log(`ℹ️ [Email Note] EMAIL_PASS is not configured in server/.env. Generated direct reset link: ${resetLink}`);
     }
 
-    if (emailSent) {
-      return res.json({
-        success: true,
-        emailDelivery: 'sent',
-        resetLink,
-        resetToken,
-        message: `Password reset email sent to ${user.email}. Please check your Gmail inbox!`
-      });
-    }
-
     return res.json({
       success: true,
-      emailDelivery: mailErrorMessage ? 'failed_fallback' : 'direct',
+      emailDelivery: emailSent ? 'sent' : (mailErrorMessage ? 'failed_fallback' : 'direct'),
       resetLink,
       resetToken,
-      message: mailErrorMessage
-        ? `Reset link ready! (Gmail delivery notice: ${mailErrorMessage}). You can reset your password immediately below.`
-        : `Password reset link created! You can reset your password immediately using the link below.`
+      message: emailSent
+        ? `Password reset email sent to ${user.email}. Please check your Gmail inbox (or spam folder)!`
+        : mailErrorMessage
+          ? `Reset link ready! (Gmail delivery note: ${mailErrorMessage}). You can reset your password immediately below.`
+          : `Password reset link created! You can reset your password immediately using the link below.`
     });
 
   } catch (error) {
@@ -298,7 +308,6 @@ exports.forgotPassword = async (req, res) => {
     });
   }
 };
-
 
 exports.resetPassword = async (req, res) => {
   try {
@@ -312,10 +321,11 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    if (password.length < 6) {
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.valid) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters long.'
+        message: passwordValidation.message
       });
     }
 
@@ -335,11 +345,10 @@ exports.resetPassword = async (req, res) => {
     if (!user.resetPasswordExpires || Date.now() > expiry) {
       return res.status(400).json({
         success: false,
-        message: 'Password reset token has expired.'
+        message: 'Password reset token has expired. Please request a new one.'
       });
     }
 
-    // Hash the new password before saving
     const hashedNewPassword = await bcrypt.hash(password, 10);
 
     await dbHelper.findByIdAndUpdate(
@@ -355,12 +364,11 @@ exports.resetPassword = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Password has been reset successfully.'
+      message: 'Password has been reset successfully! You can now log in.'
     });
 
   } catch (error) {
     console.error('Reset password error:', error);
-
     res.status(500).json({
       success: false,
       message: 'Unable to reset password.',

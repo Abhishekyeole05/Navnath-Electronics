@@ -77,11 +77,11 @@ const Footer = () => {
               Quick Links
             </h4>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.9rem' }}>
-              <li><Link to="/">Home</Link></li>
-              <li><Link to="/products">Electrical Products Catalog</Link></li>
-              <li><Link to="/services">Book Home Electrician Service</Link></li>
-              <li><Link to="/contact">Contact Shop & Map</Link></li>
-              <li><Link to="/dashboard">My Dashboard & Order Tracking</Link></li>
+              <li><Link to="/">{t('nav_home', 'Home')}</Link></li>
+              <li><Link to="/products">{t('nav_products', 'Electrical Products Catalog')}</Link></li>
+              <li><Link to="/services">{t('nav_services', 'Book Home Electrician Service')}</Link></li>
+              <li><Link to="/contact">{t('nav_contact', 'Contact Shop & Map')}</Link></li>
+              <li><Link to="/dashboard">{t('my_dashboard', 'My Dashboard & Order Tracking')}</Link></li>
               <li><Link to="/admin" style={{ color: 'var(--accent-yellow)' }}>⚡ Admin Portal (Demo)</Link></li>
             </ul>
           </div>

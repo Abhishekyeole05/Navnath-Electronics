@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   FiSearch, FiShoppingCart, FiHeart, FiUser, FiSun, FiMoon, 
-  FiMenu, FiX, FiPhoneCall, FiZap, FiShield, FiChevronDown, FiLogOut 
+  FiMenu, FiX, FiPhoneCall, FiZap, FiShield, FiChevronDown, FiLogOut, FiMapPin, FiClock 
 } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
@@ -124,47 +124,17 @@ const Navbar = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            <a href="tel:+918862004797" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
-              <FiPhoneCall /> +91 8862004797
+            <a href="tel:+918862004797" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, color: '#FFFFFF' }}>
+              <FiPhoneCall style={{ color: 'var(--accent-yellow)' }} /> +91 8862004797
             </a>
-            <span>|</span>
-            <span>{t('nashik_location')}</span>
-            <span>|</span>
-
-            {/* Top Corner Language Switcher */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              backgroundColor: 'rgba(255,255,255,0.12)',
-              borderRadius: '20px',
-              padding: '2px 4px',
-              border: '1px solid rgba(255,255,255,0.2)'
-            }}>
-              <span style={{ fontSize: '0.78rem', marginRight: '4px', marginLeft: '4px' }}>🌐</span>
-              {languages.map((l) => {
-                const isSelected = language === l.code;
-                return (
-                  <button
-                    key={l.code}
-                    onClick={() => changeLanguage(l.code)}
-                    style={{
-                      border: 'none',
-                      background: isSelected ? 'var(--accent-yellow)' : 'transparent',
-                      color: isSelected ? '#1E293B' : '#FFFFFF',
-                      fontWeight: isSelected ? 800 : 500,
-                      fontSize: '0.78rem',
-                      padding: '3px 8px',
-                      borderRadius: '16px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      lineHeight: 1
-                    }}
-                  >
-                    {l.label}
-                  </button>
-                );
-              })}
-            </div>
+            <span style={{ opacity: 0.6 }}>|</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <FiMapPin style={{ color: 'var(--accent-yellow)' }} /> {t('nashik_location')}
+            </span>
+            <span style={{ opacity: 0.6 }}>|</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.95 }}>
+              <FiClock style={{ color: 'var(--accent-yellow)' }} /> Mon - Sat: 9:00 AM - 9:00 PM
+            </span>
           </div>
         </div>
       </div>

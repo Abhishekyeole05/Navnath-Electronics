@@ -8,7 +8,7 @@ import ProductCard from '../components/common/ProductCard';
 import { 
   FiPackage, FiCalendar, FiHeart, FiShoppingCart, FiUser, FiLogOut, 
   FiCheckCircle, FiClock, FiAlertCircle, FiTrash2, FiArrowRight, FiZap,
-  FiStar, FiMessageSquare, FiX
+  FiStar, FiMessageSquare, FiX, FiPhone, FiTool
 } from 'react-icons/fi';
 
 const UserDashboard = ({ onToast }) => {
@@ -94,8 +94,11 @@ const UserDashboard = ({ onToast }) => {
 
   const getStatusBadge = (status) => {
     const st = (status || 'Processing').toLowerCase();
-    if (st === 'delivered' || st === 'completed' || st === 'confirmed') {
+    if (st === 'delivered' || st === 'completed' || st === 'confirmed' || st === 'technician assigned') {
       return <span className="badge badge-green">{status}</span>;
+    }
+    if (st === 'cancelled') {
+      return <span className="badge" style={{ backgroundColor: '#FEF2F2', color: '#DC2626', border: '1px solid #FCA5A5' }}>Cancelled</span>;
     }
     return <span className="badge badge-yellow">{status}</span>;
   };
@@ -188,6 +191,24 @@ const UserDashboard = ({ onToast }) => {
             </div>
 
             <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {user.role === 'admin' && (
+                <Link
+                  to="/admin"
+                  className="btn btn-accent"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    justifyContent: 'center',
+                    padding: '10px 14px',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    marginBottom: '8px'
+                  }}
+                >
+                  <FiZap /> Open Store Admin Portal
+                </Link>
+              )}
               <button
                 onClick={() => setActiveTab('cart')}
                 style={{
@@ -562,36 +583,105 @@ const UserDashboard = ({ onToast }) => {
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                    {bookings.map((bk) => (
-                      <div key={bk._id || bk.id} style={{
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '12px',
-                        padding: '20px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        flexWrap: 'wrap',
-                        gap: '16px'
-                      }}>
-                        <div>
-                          <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-primary)' }}>
-                            {bk.serviceName || bk.serviceTitle || 'Home Electrical Service'}
+                    {bookings.map((bk) => {
+                      const hasAssignedWorker = bk.technicianName && bk.technicianName !== 'Pending Assignment';
+                      return (
+                        <div key={bk._id || bk.id} style={{
+                          border: '1px solid var(--border-color)',
+                          borderRadius: '12px',
+                          padding: '22px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '14px',
+                          backgroundColor: 'var(--bg-secondary)'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                            <div>
+                              <div style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--primary-blue)' }}>
+                                {bk.serviceName || bk.serviceTitle || 'Electrical Systems Service'}
+                              </div>
+                              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                                Reference: <strong>#{bk.bookingId || bk._id || bk.id}</strong> | 📅 Scheduled Date: <strong>{bk.preferredDate || bk.date}</strong> | ⏰ Time Slot: <strong>{bk.timeSlot || (bk.message && bk.message.match(/Time Slot:\s*([^,\n]+)/i)?.[1]) || '10:00 AM - 12:00 PM'}</strong>
+                              </div>
+                              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                                📍 Service Address: {bk.address}
+                              </div>
+                              {bk.message && (
+                                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                  📝 Notes / Requirement: {bk.message}
+                                </div>
+                              )}
+                            </div>
+                            {getStatusBadge(bk.status)}
                           </div>
-                          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                            📅 Date: {bk.preferredDate || bk.date} {bk.message ? `| 📝 ${bk.message}` : ''}
-                          </div>
-                          <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                            📍 Location: {bk.address}
-                          </div>
-                          {bk.technicianName && bk.technicianName !== 'Pending Assignment' && (
-                            <div style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: 600, marginTop: '4px' }}>
-                              👨‍🔧 Assigned: {bk.technicianName}
+
+                          {/* Technician Contact Details */}
+                          {hasAssignedWorker ? (
+                            <div style={{
+                              backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                              border: '1.5px solid #10B981',
+                              borderRadius: '10px',
+                              padding: '16px 20px',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              flexWrap: 'wrap',
+                              gap: '12px'
+                            }}>
+                              <div>
+                                <div style={{ fontSize: '0.98rem', fontWeight: 700, color: '#065F46', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  👨‍🔧 Assigned Electrician: <span style={{ textDecoration: 'underline' }}>{bk.technicianName}</span>
+                                </div>
+                                {bk.technicianSpecialization && (
+                                  <div style={{ fontSize: '0.82rem', color: '#047857', marginTop: '2px' }}>
+                                    🛠️ Expertise: {bk.technicianSpecialization}
+                                  </div>
+                                )}
+                                {bk.technicianPhone && (
+                                  <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#065F46', marginTop: '6px' }}>
+                                    📞 Direct Phone: <a href={`tel:${bk.technicianPhone}`} style={{ color: '#059669', textDecoration: 'underline' }}>{bk.technicianPhone}</a>
+                                  </div>
+                                )}
+                              </div>
+
+                              {bk.technicianPhone && (
+                                <a
+                                  href={`tel:${bk.technicianPhone}`}
+                                  className="btn btn-primary btn-sm"
+                                  style={{
+                                    backgroundColor: '#059669',
+                                    borderColor: '#059669',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    padding: '10px 18px',
+                                    fontWeight: 700,
+                                    fontSize: '0.9rem'
+                                  }}
+                                >
+                                  <FiPhone /> Call Electrician Directly
+                                </a>
+                              )}
+                            </div>
+                          ) : (
+                            <div style={{
+                              backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                              border: '1px dashed #CA8A04',
+                              borderRadius: '8px',
+                              padding: '12px 16px',
+                              fontSize: '0.85rem',
+                              color: '#854D0E',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '10px'
+                            }}>
+                              <FiClock style={{ fontSize: '1.2rem', flexShrink: 0 }} />
+                              <span>Awaiting Admin Approval & Electrician Assignment. Once the store manager assigns an electrician to your request, their direct name and phone number will appear right here for direct contact.</span>
                             </div>
                           )}
                         </div>
-                        {getStatusBadge(bk.status)}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

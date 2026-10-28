@@ -30,10 +30,23 @@ exports.bookService = async (req, res) => {
     const customerPhone = mobile || phone || (req.user && req.user.phone);
     const serviceAddr = address || street;
     const targetServiceId = serviceId;
-    const targetDate = preferredDate || date || new Date().toISOString().split('T')[0];
+    const targetDate = (preferredDate || date || '').trim();
 
     if (!customerName || !customerPhone || !serviceAddr) {
       return res.status(400).json({ success: false, message: 'Please provide all required booking fields (name, phone, address).' });
+    }
+
+    if (!targetDate) {
+      return res.status(400).json({ success: false, message: 'Please select a preferred date for the service.' });
+    }
+
+    // Date validation: past dates are strictly disallowed
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (targetDate < todayStr) {
+      return res.status(400).json({
+        success: false,
+        message: `Preferred date (${targetDate}) cannot be in the past. Please select today (${todayStr}) or a future date.`
+      });
     }
 
     const bookingId = 'BOOK-' + Math.floor(1000 + Math.random() * 9000);
@@ -43,17 +56,22 @@ exports.bookService = async (req, res) => {
       name: customerName,
       mobile: customerPhone,
       address: serviceAddr,
-      serviceId: targetServiceId || 'general-electrical-service',
-      serviceName: serviceName || serviceTitle || 'Electrical Service & Repair',
+      serviceId: targetServiceId || 'install-electrical-systems',
+      serviceName: serviceName || serviceTitle || 'Install Electrical Systems',
       preferredDate: targetDate,
+      timeSlot: timeSlot || '10:00 AM - 12:00 PM',
       message: message || notes || (timeSlot ? `Time Slot: ${timeSlot}` : ''),
       status: 'Pending',
+      workerId: null,
       technicianName: 'Pending Assignment',
+      technicianPhone: '',
+      technicianSpecialization: '',
       estimatedCharge: 'As per inspection'
     });
 
     res.status(201).json({
       success: true,
+      message: 'Electrician service request submitted successfully! An electrician will be assigned soon.',
       booking: newBooking
     });
   } catch (error) {

@@ -62,7 +62,6 @@ router.post('/payments/razorpay-order', paymentController.createRazorpayOrder);
 router.post('/payments/verify', paymentController.verifyPayment);
 router.post('/payments/verify-upi', paymentController.verifyUpiPayment);
 
-
 // ==========================================
 // Secure Admin Routes
 // ==========================================
@@ -78,6 +77,12 @@ router.get('/admin/orders', protect, adminOnly, adminController.getAllOrders);
 router.put('/admin/orders/:id/status', protect, adminOnly, adminController.updateOrderStatus);
 router.get('/admin/bookings', protect, adminOnly, adminController.getAllBookings);
 router.put('/admin/bookings/:id/status', protect, adminOnly, adminController.updateBookingStatus);
+
+// Admin - Workers / Electricians
+router.get('/admin/workers', protect, adminOnly, adminController.getAllWorkers);
+router.post('/admin/workers', protect, adminOnly, adminController.createWorker);
+router.put('/admin/workers/:id', protect, adminOnly, adminController.updateWorker);
+router.delete('/admin/workers/:id', protect, adminOnly, adminController.deleteWorker);
 
 // Admin - Users & Coupons
 router.get('/admin/users', protect, adminOnly, adminController.getAllUsers);

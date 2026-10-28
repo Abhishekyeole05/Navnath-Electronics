@@ -18,7 +18,7 @@ const iconMap = {
 
 const ProductCategoriesGrid = () => {
   const [categories, setCategories] = useState([]);
-  const { tCategory } = useLanguage();
+  const { t, tCategory } = useLanguage();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -48,10 +48,10 @@ const ProductCategoriesGrid = () => {
         }}>
           <div>
             <span className="badge badge-blue" style={{ marginBottom: '8px' }}>
-              OUR ELECTRICAL CATALOG
+              {t('explore_catalog_badge', 'OUR ELECTRICAL CATALOG')}
             </span>
             <h2 style={{ fontSize: '2.1rem', color: 'var(--text-primary)' }}>
-              Shop by Electrical Category
+              {t('shop_by_category', 'Shop by Electrical Category')}
             </h2>
           </div>
 
@@ -66,7 +66,7 @@ const ProductCategoriesGrid = () => {
               fontSize: '0.95rem'
             }}
           >
-            View Full Catalog <FiArrowRight />
+            {t('view_full_catalog', 'View Full Catalog')} <FiArrowRight />
           </Link>
         </div>
 
@@ -148,7 +148,7 @@ const ProductCategoriesGrid = () => {
                 fontWeight: 700,
                 color: 'var(--primary-blue)'
               }}>
-                <span>Explore Products</span>
+                <span>{t('explore_products', 'Explore Products')}</span>
                 <FiArrowRight />
               </div>
             </Link>
