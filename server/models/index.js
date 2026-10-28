@@ -6,17 +6,11 @@ const { getUseMemoryStore, memoryStore } = require('../config/db');
 // ==========================================
 
 const userSchema = new mongoose.Schema({
-
   name: { type: String, required: true },
-
   email: { type: String, required: true, unique: true },
-
   password: { type: String, required: true },
-
   resetPasswordToken: { type: String, default: null },
-
   resetPasswordExpires: { type: Date, default: null },
-
   phone: { type: String, default: '' },
   role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
   addresses: [{
@@ -63,11 +57,11 @@ const categorySchema = new mongoose.Schema({
 const serviceSchema = new mongoose.Schema({
   title: { type: String, required: true },
   slug: { type: String, required: true, unique: true },
-  category: { type: String, default: 'Electrical Repair' },
+  category: { type: String, default: 'Electrical Systems' },
   priceEstimate: { type: String, required: true },
   description: { type: String, required: true },
   icon: { type: String, default: 'FiTool' },
-  duration: { type: String, default: '2-3 Hours' },
+  duration: { type: String, default: '1-3 Hours' },
   features: [{ type: String }]
 }, { timestamps: true });
 
@@ -80,14 +74,30 @@ const bookingSchema = new mongoose.Schema({
   serviceId: { type: String, required: true },
   serviceName: { type: String, required: true },
   preferredDate: { type: String, required: true },
+  timeSlot: { type: String, default: '10:00 AM - 12:00 PM' },
   message: { type: String, default: '' },
   status: { 
     type: String, 
     enum: ['Pending', 'Confirmed', 'Technician Assigned', 'Completed', 'Cancelled'], 
     default: 'Pending' 
   },
+  workerId: { type: String, default: null },
   technicianName: { type: String, default: 'Pending Assignment' },
+  technicianPhone: { type: String, default: '' },
+  technicianSpecialization: { type: String, default: '' },
   estimatedCharge: { type: String, default: 'As per inspection' }
+}, { timestamps: true });
+
+const workerSchema = new mongoose.Schema({
+  workerId: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  phone: { type: String, required: true },
+  email: { type: String, default: '' },
+  specialization: { type: String, default: 'Master Electrician' },
+  experience: { type: String, default: '5+ Years' },
+  status: { type: String, enum: ['Active', 'On Job', 'Inactive'], default: 'Active' },
+  rating: { type: Number, default: 4.9 },
+  totalJobs: { type: Number, default: 0 }
 }, { timestamps: true });
 
 const orderSchema = new mongoose.Schema({
@@ -153,6 +163,7 @@ const Product = mongoose.models.Product || mongoose.model('Product', productSche
 const Category = mongoose.models.Category || mongoose.model('Category', categorySchema);
 const Service = mongoose.models.Service || mongoose.model('Service', serviceSchema);
 const Booking = mongoose.models.Booking || mongoose.model('Booking', bookingSchema);
+const Worker = mongoose.models.Worker || mongoose.model('Worker', workerSchema);
 const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 const Coupon = mongoose.models.Coupon || mongoose.model('Coupon', couponSchema);
 const Review = mongoose.models.Review || mongoose.model('Review', reviewSchema);
@@ -198,7 +209,8 @@ const dbHelper = {
         $or: [
           { slug: id },
           { orderId: id },
-          { bookingId: id }
+          { bookingId: id },
+          { workerId: id }
         ]
       }).lean();
     }
@@ -223,7 +235,7 @@ const dbHelper = {
     }
     if (!doc) {
       doc = await model.findOneAndUpdate(
-        { $or: [{ slug: id }, { orderId: id }, { bookingId: id }] },
+        { $or: [{ slug: id }, { orderId: id }, { bookingId: id }, { workerId: id }] },
         updateData,
         { new: true }
       ).lean();
@@ -239,7 +251,7 @@ const dbHelper = {
       return await model.findByIdAndDelete(id).lean();
     }
     return await model.findOneAndDelete({
-      $or: [{ slug: id }, { orderId: id }, { bookingId: id }]
+      $or: [{ slug: id }, { orderId: id }, { bookingId: id }, { workerId: id }]
     }).lean();
   }
 };
@@ -250,6 +262,7 @@ module.exports = {
   Category,
   Service,
   Booking,
+  Worker,
   Order,
   Coupon,
   Review,

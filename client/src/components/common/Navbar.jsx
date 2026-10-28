@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   FiSearch, FiShoppingCart, FiHeart, FiUser, FiSun, FiMoon, 
-  FiMenu, FiX, FiPhoneCall, FiZap, FiShield, FiChevronDown, FiLogOut 
+  FiMenu, FiX, FiPhoneCall, FiZap, FiShield, FiChevronDown, FiLogOut, FiMapPin, FiClock 
 } from 'react-icons/fi';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
@@ -14,7 +14,7 @@ import axios from 'axios';
 const Navbar = () => {
   const { cartItems } = useCart();
   const { wishlist } = useWishlist();
-  const { user, logout, loginAsDemoAdmin, loginAsDemoCustomer } = useAuth();
+  const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { language, changeLanguage, t } = useLanguage();
   
@@ -72,17 +72,7 @@ const Navbar = () => {
     }
   };
 
-  const handleDemoAdmin = async () => {
-    await loginAsDemoAdmin();
-    setIsUserMenuOpen(false);
-    navigate('/admin');
-  };
 
-  const handleDemoCustomer = async () => {
-    await loginAsDemoCustomer();
-    setIsUserMenuOpen(false);
-    navigate('/dashboard');
-  };
 
   const navLinks = [
     { name: t('nav_home'), path: '/' },
@@ -124,47 +114,17 @@ const Navbar = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-            <a href="tel:+918862004797" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
-              <FiPhoneCall /> +91 8862004797
+            <a href="tel:+918862004797" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, color: '#FFFFFF' }}>
+              <FiPhoneCall style={{ color: 'var(--accent-yellow)' }} /> +91 8862004797
             </a>
-            <span>|</span>
-            <span>{t('nashik_location')}</span>
-            <span>|</span>
-
-            {/* Top Corner Language Switcher */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              backgroundColor: 'rgba(255,255,255,0.12)',
-              borderRadius: '20px',
-              padding: '2px 4px',
-              border: '1px solid rgba(255,255,255,0.2)'
-            }}>
-              <span style={{ fontSize: '0.78rem', marginRight: '4px', marginLeft: '4px' }}>🌐</span>
-              {languages.map((l) => {
-                const isSelected = language === l.code;
-                return (
-                  <button
-                    key={l.code}
-                    onClick={() => changeLanguage(l.code)}
-                    style={{
-                      border: 'none',
-                      background: isSelected ? 'var(--accent-yellow)' : 'transparent',
-                      color: isSelected ? '#1E293B' : '#FFFFFF',
-                      fontWeight: isSelected ? 800 : 500,
-                      fontSize: '0.78rem',
-                      padding: '3px 8px',
-                      borderRadius: '16px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      lineHeight: 1
-                    }}
-                  >
-                    {l.label}
-                  </button>
-                );
-              })}
-            </div>
+            <span style={{ opacity: 0.6 }}>|</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <FiMapPin style={{ color: 'var(--accent-yellow)' }} /> {t('nashik_location')}
+            </span>
+            <span style={{ opacity: 0.6 }}>|</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', opacity: 0.95 }}>
+              <FiClock style={{ color: 'var(--accent-yellow)' }} /> Mon - Sat: 9:00 AM - 9:00 PM
+            </span>
           </div>
         </div>
       </div>
@@ -553,34 +513,35 @@ const Navbar = () => {
                   ) : (
                     <div style={{ padding: '16px' }}>
                       <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                        Sign in for faster checkout and order tracking
+                        Sign in for faster checkout, order tracking, and electrician booking
                       </div>
                       <Link
                         to="/login"
                         onClick={() => setIsUserMenuOpen(false)}
                         className="btn btn-primary"
-                        style={{ width: '100%', marginBottom: '8px' }}
+                        style={{ width: '100%', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                       >
-                        Sign In / Register
+                        <FiUser /> {t('customer_login', 'Customer Sign In')}
+                      </Link>
+                      <Link
+                        to="/login?role=admin"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="btn btn-outline"
+                        style={{ width: '100%', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.86rem' }}
+                      >
+                        <FiShield /> {t('admin_login', '⚡ Store Admin Login')}
                       </Link>
 
-                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', margin: '10px 0 6px' }}>
-                        INSTANT DEMO ACCESS:
+                      <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        New customer?{' '}
+                        <Link
+                          to="/register"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          style={{ color: 'var(--primary-blue)', fontWeight: 700 }}
+                        >
+                          {t('create_account', 'Create an Account')}
+                        </Link>
                       </div>
-                      <button
-                        onClick={handleDemoCustomer}
-                        className="btn btn-outline"
-                        style={{ width: '100%', fontSize: '0.8rem', padding: '8px', marginBottom: '6px' }}
-                      >
-                        Demo Customer Account
-                      </button>
-                      <button
-                        onClick={handleDemoAdmin}
-                        className="btn btn-accent"
-                        style={{ width: '100%', fontSize: '0.8rem', padding: '8px' }}
-                      >
-                        ⚡ Demo Admin Login
-                      </button>
                     </div>
                   )}
                 </div>

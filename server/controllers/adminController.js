@@ -1,4 +1,4 @@
-const { User, Product, Category, Service, Booking, Order, Coupon, dbHelper } = require('../models');
+const { User, Product, Category, Service, Booking, Worker, Order, Coupon, dbHelper } = require('../models');
 
 exports.getDashboardStats = async (req, res) => {
   try {
@@ -7,6 +7,7 @@ exports.getDashboardStats = async (req, res) => {
     const users = await dbHelper.find('users', User);
     const services = await dbHelper.find('services', Service);
     const bookings = await dbHelper.find('bookings', Booking);
+    const workers = await dbHelper.find('workers', Worker);
 
     // Calculate revenue
     const totalRevenue = orders.reduce((sum, ord) => sum + Number(ord.totalAmount || ord.totalPrice || ord.subtotal || 0), 0);
@@ -15,6 +16,7 @@ exports.getDashboardStats = async (req, res) => {
     const totalProducts = products.length;
     const totalServices = services.length;
     const totalBookings = bookings.length;
+    const totalWorkers = workers.length;
 
     // Monthly revenue chart data
     const monthlyRevenue = [
@@ -46,6 +48,7 @@ exports.getDashboardStats = async (req, res) => {
         totalProducts,
         totalServices,
         totalBookings,
+        totalWorkers,
         monthlyRevenue,
         bestSellingProducts
       }
@@ -126,7 +129,7 @@ exports.updateOrderStatus = async (req, res) => {
 };
 
 // ==========================================
-// Admin CRUD - Service Bookings
+// Admin CRUD - Service Bookings & Worker Assignment
 // ==========================================
 exports.getAllBookings = async (req, res) => {
   try {
@@ -141,20 +144,163 @@ exports.getAllBookings = async (req, res) => {
 exports.updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, technicianName } = req.body;
+    const { 
+      status, 
+      workerId, 
+      technicianName, 
+      technicianPhone, 
+      technicianSpecialization,
+      estimatedCharge 
+    } = req.body;
+
     let booking = await dbHelper.findOne('bookings', Booking, { bookingId: id });
     if (!booking) {
       booking = await dbHelper.findById('bookings', Booking, id);
     }
     if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
 
-    const updated = await dbHelper.findByIdAndUpdate('bookings', Booking, booking._id || booking.id, {
-      status: status || booking.status,
-      technicianName: technicianName || booking.technicianName
+    let finalTechnicianName = technicianName || booking.technicianName;
+    let finalTechnicianPhone = technicianPhone || booking.technicianPhone || '';
+    let finalTechnicianSpec = technicianSpecialization || booking.technicianSpecialization || '';
+    let finalWorkerId = workerId || booking.workerId || null;
+
+    // If workerId is provided, lookup worker details to ensure accurate contact info
+    if (workerId) {
+      const worker = await dbHelper.findOne('workers', Worker, { workerId }) || 
+                     await dbHelper.findById('workers', Worker, workerId);
+      if (worker) {
+        finalWorkerId = worker.workerId || worker._id || worker.id;
+        finalTechnicianName = worker.name;
+        finalTechnicianPhone = worker.phone;
+        finalTechnicianSpec = worker.specialization || '';
+      }
+    }
+
+    // TIME SLOT OVERLAP VALIDATION: Same electrician cannot be assigned to 2 customers at the same date & time slot
+    const targetStatus = status || (finalTechnicianPhone ? 'Technician Assigned' : booking.status);
+    if (finalWorkerId && targetStatus !== 'Cancelled') {
+      const bookingDate = booking.preferredDate || booking.date;
+      const extractSlot = (b) => b.timeSlot || (b.message && b.message.match(/Time Slot:\s*([^,\n]+)/i)?.[1]) || '10:00 AM - 12:00 PM';
+      const bookingSlot = extractSlot(booking);
+
+      const allBookings = await dbHelper.find('bookings', Booking);
+      const conflict = allBookings.find(b => {
+        const bId = b._id || b.id || b.bookingId;
+        const curId = booking._id || booking.id || booking.bookingId;
+        if (String(bId) === String(curId) || (b.bookingId && b.bookingId === booking.bookingId)) return false;
+        if (b.status === 'Cancelled') return false;
+
+        const bDate = b.preferredDate || b.date;
+        const bSlot = extractSlot(b);
+
+        if (bDate === bookingDate && bSlot === bookingSlot) {
+          const isSameWorker = (b.workerId && (String(b.workerId) === String(finalWorkerId) || String(b.workerId) === String(workerId))) ||
+                               (b.technicianName && b.technicianName !== 'Pending Assignment' && b.technicianName === finalTechnicianName);
+          return isSameWorker;
+        }
+        return false;
+      });
+
+      if (conflict) {
+        return res.status(400).json({
+          success: false,
+          conflict: true,
+          conflictingBookingId: conflict.bookingId,
+          message: `Electrician ${finalTechnicianName} is already assigned to Booking #${conflict.bookingId} (${conflict.name}) on ${bookingDate} for the ${bookingSlot} slot. The same electrician cannot be assigned to two customers at the same time.`
+        });
+      }
+    }
+
+    const updatePayload = {
+      status: status || (finalTechnicianPhone ? 'Technician Assigned' : booking.status),
+      workerId: finalWorkerId,
+      technicianName: finalTechnicianName,
+      technicianPhone: finalTechnicianPhone,
+      technicianSpecialization: finalTechnicianSpec
+    };
+
+    if (estimatedCharge) {
+      updatePayload.estimatedCharge = estimatedCharge;
+    }
+
+    const updated = await dbHelper.findByIdAndUpdate('bookings', Booking, booking._id || booking.id, updatePayload);
+    res.json({ 
+      success: true, 
+      message: 'Booking updated successfully. Customer now has access to the assigned electrician details.',
+      booking: updated 
     });
-    res.json({ success: true, booking: updated });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to update booking status' });
+    res.status(500).json({ success: false, message: 'Failed to update booking status', error: error.message });
+  }
+};
+
+// ==========================================
+// Admin CRUD - Workers / Electricians
+// ==========================================
+exports.getAllWorkers = async (req, res) => {
+  try {
+    const workers = await dbHelper.find('workers', Worker);
+    res.json({ success: true, workers });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch workers', error: error.message });
+  }
+};
+
+exports.createWorker = async (req, res) => {
+  try {
+    const { name, phone, email, specialization, experience, status, rating } = req.body;
+    if (!name || !phone) {
+      return res.status(400).json({ success: false, message: 'Worker name and contact phone number are required.' });
+    }
+
+    const workerId = 'WRK-' + Math.floor(100 + Math.random() * 900);
+    const newWorker = await dbHelper.create('workers', Worker, {
+      workerId,
+      name: name.trim(),
+      phone: phone.trim(),
+      email: email ? email.trim() : '',
+      specialization: specialization || 'Master Electrician (Install, Maintain, Repair, Test)',
+      experience: experience || '5+ Years',
+      status: status || 'Active',
+      rating: Number(rating) || 4.9,
+      totalJobs: 0
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'New electrician/worker added successfully!',
+      worker: newWorker
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to create worker', error: error.message });
+  }
+};
+
+exports.updateWorker = async (req, res) => {
+  try {
+    const { id } = req.params;
+    let worker = await dbHelper.findOne('workers', Worker, { workerId: id }) || 
+                 await dbHelper.findById('workers', Worker, id);
+    if (!worker) return res.status(404).json({ success: false, message: 'Worker not found' });
+
+    const updated = await dbHelper.findByIdAndUpdate('workers', Worker, worker._id || worker.id, req.body);
+    res.json({ success: true, message: 'Worker updated successfully', worker: updated });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update worker', error: error.message });
+  }
+};
+
+exports.deleteWorker = async (req, res) => {
+  try {
+    const { id } = req.params;
+    let worker = await dbHelper.findOne('workers', Worker, { workerId: id }) || 
+                 await dbHelper.findById('workers', Worker, id);
+    if (!worker) return res.status(404).json({ success: false, message: 'Worker not found' });
+
+    await dbHelper.findByIdAndDelete('workers', Worker, worker._id || worker.id);
+    res.json({ success: true, message: 'Worker deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to delete worker', error: error.message });
   }
 };
 

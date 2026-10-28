@@ -38,14 +38,17 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      const cleanEmail = email ? email.trim().toLowerCase() : '';
       const res = await axios.post('/api/auth/login', { 
-        email: email ? email.trim().toLowerCase() : '', 
+        email: cleanEmail, 
         password 
       });
       if (res.data.success) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+        localStorage.setItem('navnath_token', res.data.token);
         setToken(res.data.token);
         setUser(res.data.user);
-        return { success: true };
+        return { success: true, user: res.data.user, token: res.data.token };
       }
       return { success: false, message: res.data.message || 'Login failed' };
     } catch (err) {
@@ -56,16 +59,19 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password, phone) => {
     try {
+      const cleanEmail = email ? email.trim().toLowerCase() : '';
       const res = await axios.post('/api/auth/register', { 
         name, 
-        email: email ? email.trim().toLowerCase() : '', 
+        email: cleanEmail, 
         password, 
         phone 
       });
       if (res.data.success) {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+        localStorage.setItem('navnath_token', res.data.token);
         setToken(res.data.token);
         setUser(res.data.user);
-        return { success: true };
+        return { success: true, user: res.data.user, token: res.data.token };
       }
       return { success: false, message: res.data.message || 'Registration failed' };
     } catch (err) {
@@ -75,20 +81,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    delete axios.defaults.headers.common['Authorization'];
     setToken(null);
     setUser(null);
     localStorage.removeItem('navnath_token');
     localStorage.removeItem('navnath_cart');
     localStorage.removeItem('navnath_wishlist');
-  };
-
-  // Quick helper for Demo testing
-  const loginAsDemoAdmin = async () => {
-    return await login('admin@navnath.com', 'admin123');
-  };
-
-  const loginAsDemoCustomer = async () => {
-    return await login('user@navnath.com', 'user123');
   };
 
   return (
@@ -98,9 +96,7 @@ export const AuthProvider = ({ children }) => {
       loading,
       login,
       register,
-      logout,
-      loginAsDemoAdmin,
-      loginAsDemoCustomer
+      logout
     }}>
       {children}
     </AuthContext.Provider>

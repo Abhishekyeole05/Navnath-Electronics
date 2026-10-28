@@ -5,6 +5,7 @@ import Footer from './components/common/Footer';
 import FloatingButtons from './components/common/FloatingButtons';
 import ScrollProgressBar from './components/common/ScrollProgressBar';
 import Toast from './components/common/Toast';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 // Pages
 import Home from './pages/Home';
@@ -46,6 +47,7 @@ const App = () => {
         <Navbar />
         
         <main style={{ flex: 1 }}>
+          <ErrorBoundary>
           <Routes>
             <Route path="/" element={<Home onToast={showToast} />} />
             <Route path="/products" element={<Products onToast={showToast} />} />
@@ -68,6 +70,7 @@ const App = () => {
             <Route path="/admin" element={<AdminDashboard onToast={showToast} />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+                  </ErrorBoundary>
         </main>
 
         <Footer />

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import PasswordStrengthMeter, { checkPasswordStrength } from '../components/common/PasswordStrengthMeter';
 
 const Register = ({ onToast }) => {
   const { user, register } = useAuth();

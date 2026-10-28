@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FiLock, FiEye, FiEyeOff, FiCheckCircle, FiAlertCircle, FiArrowLeft, FiShield } from 'react-icons/fi';
+import PasswordStrengthMeter, { checkPasswordStrength } from '../components/common/PasswordStrengthMeter';
 
 const ResetPassword = () => {
   const { token } = useParams();
@@ -157,7 +158,7 @@ const ResetPassword = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">New Password (Min 6 characters) *</label>
+            <label className="form-label">New Password *</label>
             <div className="password-wrapper">
               <input
                 type={showPassword ? 'text' : 'password'}

@@ -3,6 +3,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay, EffectFade } from 'swiper/modules';
 import { Link } from 'react-router-dom';
 import { FiArrowRight, FiZap, FiTool } from 'react-icons/fi';
+import { useLanguage } from '../../context/LanguageContext';
 
 const slides = [
   {
@@ -38,6 +39,7 @@ const slides = [
 ];
 
 const HeroBanner = () => {
+  const { tHeroSlide } = useLanguage();
   return (
     <div style={{ position: 'relative', overflow: 'hidden', backgroundColor: 'var(--bg-main)' }}>
       <Swiper
@@ -48,7 +50,9 @@ const HeroBanner = () => {
         loop={true}
         style={{ width: '100%', height: '520px' }}
       >
-        {slides.map((slide) => (
+        {slides.map((defaultSlide, idx) => {
+          const slide = tHeroSlide ? tHeroSlide(idx, defaultSlide) : defaultSlide;
+          return (
           <SwiperSlide key={slide.id}>
             <div style={{
               position: 'relative',
@@ -129,7 +133,8 @@ const HeroBanner = () => {
               </div>
             </div>
           </SwiperSlide>
-        ))}
+          );
+        })}
       </Swiper>
     </div>
   );

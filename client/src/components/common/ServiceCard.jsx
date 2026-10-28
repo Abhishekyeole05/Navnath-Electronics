@@ -3,6 +3,7 @@ import {
   FiTool, FiSliders, FiDroplet, FiCpu, FiSun, FiGrid, 
   FiShield, FiCheck, FiCalendar, FiArrowRight 
 } from 'react-icons/fi';
+import { useLanguage } from '../../context/LanguageContext';
 
 const iconMap = {
   FiTool: <FiTool />,
@@ -15,6 +16,9 @@ const iconMap = {
 };
 
 const ServiceCard = ({ service, onBookNow }) => {
+  const { t, tService } = useLanguage();
+  const svc = tService ? tService(service) : service;
+
   return (
     <div style={{
       backgroundColor: 'var(--bg-card)',
@@ -55,7 +59,7 @@ const ServiceCard = ({ service, onBookNow }) => {
         </div>
 
         <span className="badge badge-blue" style={{ fontSize: '0.72rem' }}>
-          {service.duration || '2 Hours'}
+          {svc.duration || '2 Hours'}
         </span>
       </div>
 
@@ -66,7 +70,7 @@ const ServiceCard = ({ service, onBookNow }) => {
         marginBottom: '8px',
         color: 'var(--text-primary)'
       }}>
-        {service.title}
+        {svc.title}
       </h3>
 
       {/* Description */}
@@ -77,11 +81,11 @@ const ServiceCard = ({ service, onBookNow }) => {
         lineHeight: '1.6',
         flex: 1
       }}>
-        {service.description}
+        {svc.description}
       </p>
 
       {/* Features bullet list */}
-      {service.features && (
+      {svc.features && (
         <ul style={{
           listStyle: 'none',
           marginBottom: '20px',
@@ -93,7 +97,7 @@ const ServiceCard = ({ service, onBookNow }) => {
           borderTop: '1px solid var(--border-color)',
           paddingTop: '16px'
         }}>
-          {service.features.map((feat, i) => (
+          {svc.features.map((feat, i) => (
             <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <FiCheck style={{ color: 'var(--success)', flexShrink: 0 }} />
               <span>{feat}</span>
@@ -112,10 +116,10 @@ const ServiceCard = ({ service, onBookNow }) => {
       }}>
         <div>
           <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
-            ESTIMATED CHARGE
+            {t('price_label', 'ESTIMATED CHARGE')}
           </div>
           <div style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--primary-blue)' }}>
-            {service.priceEstimate}
+            {svc.priceEstimate}
           </div>
         </div>
 
@@ -124,7 +128,7 @@ const ServiceCard = ({ service, onBookNow }) => {
           className="btn btn-accent btn-sm"
           style={{ padding: '10px 18px', fontWeight: 700, borderRadius: '8px' }}
         >
-          <FiCalendar /> Book Now
+          <FiCalendar /> {t('book_now')}
         </button>
       </div>
     </div>

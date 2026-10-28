@@ -23,7 +23,7 @@ const Products = ({ onToast }) => {
   const [selectedCategory, setSelectedCategory] = useState(queryParams.get('category') || 'all');
   const [selectedBrand, setSelectedBrand] = useState(queryParams.get('brand') || 'all');
   const [searchTerm, setSearchTerm] = useState(queryParams.get('search') || '');
-  const [maxPrice, setMaxPrice] = useState(20000);
+  const [maxPrice, setMaxPrice] = useState(250000);
   const [minRating, setMinRating] = useState(0);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [sortOption, setSortOption] = useState('default');
@@ -61,7 +61,7 @@ const Products = ({ onToast }) => {
         if (selectedCategory && selectedCategory !== 'all') params.append('category', selectedCategory);
         if (selectedBrand && selectedBrand !== 'all') params.append('brand', selectedBrand);
         if (searchTerm) params.append('search', searchTerm);
-        if (maxPrice < 20000) params.append('maxPrice', maxPrice);
+        if (maxPrice < 250000) params.append('maxPrice', maxPrice);
         if (minRating > 0) params.append('minRating', minRating);
         if (inStockOnly) params.append('inStock', 'true');
         if (sortOption !== 'default') params.append('sort', sortOption);
@@ -83,7 +83,7 @@ const Products = ({ onToast }) => {
     setSelectedCategory('all');
     setSelectedBrand('all');
     setSearchTerm('');
-    setMaxPrice(20000);
+    setMaxPrice(250000);
     setMinRating(0);
     setInStockOnly(false);
     setSortOption('default');
@@ -219,9 +219,9 @@ const Products = ({ onToast }) => {
               </div>
               <input
                 type="range"
-                min="300"
-                max="20000"
-                step="500"
+                min="200"
+                max="250000"
+                step="1000"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(Number(e.target.value))}
                 style={{ width: '100%', cursor: 'pointer' }}

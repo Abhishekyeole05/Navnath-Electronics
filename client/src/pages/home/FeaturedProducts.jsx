@@ -4,8 +4,10 @@ import { Link } from 'react-router-dom';
 import ProductCard from '../../components/common/ProductCard';
 import SkeletonLoader from '../../components/common/SkeletonLoader';
 import { FiArrowRight } from 'react-icons/fi';
+import { useLanguage } from '../../context/LanguageContext';
 
 const FeaturedProducts = ({ onToast }) => {
+  const { t } = useLanguage();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,10 +40,10 @@ const FeaturedProducts = ({ onToast }) => {
         }}>
           <div>
             <span className="badge badge-yellow" style={{ marginBottom: '8px' }}>
-              BESTSELLERS IN NASHIK
+              {t('home_bestsellers_badge', 'BESTSELLERS IN MANMAD')}
             </span>
             <h2 style={{ fontSize: '2.2rem', color: 'var(--text-primary)' }}>
-              Featured Electrical Products
+              {t('home_featured_title', 'Featured Electrical Products')}
             </h2>
           </div>
 
@@ -50,7 +52,7 @@ const FeaturedProducts = ({ onToast }) => {
             className="btn btn-outline"
             style={{ padding: '10px 22px' }}
           >
-            View All 1,500+ Products <FiArrowRight />
+            {t('view_all_products', 'View All Products')} <FiArrowRight />
           </Link>
         </div>
 
