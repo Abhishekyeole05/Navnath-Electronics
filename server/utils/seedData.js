@@ -3,343 +3,7 @@ const {
 } = require('../models');
 const { getUseMemoryStore, memoryStore } = require('../config/db');
 const bcrypt = require('bcryptjs');
-const { productImageMap, categoryImageMap } = require('./productImageMap');
-
-const initialCategories = [
-  {
-    name: 'Wires & Cables',
-    slug: 'wires-cables',
-    icon: 'FiActivity',
-    description: 'High quality copper & FR PVC insulated wires for domestic & industrial wiring',
-    image: categoryImageMap['wires-cables'],
-    productCount: 3
-  },
-  {
-    name: 'Switches & Sockets',
-    slug: 'switches-sockets',
-    icon: 'FiToggleRight',
-    description: 'Modular switches, sockets, MCBs, and heavy-duty distribution panels',
-    image: categoryImageMap['switches-sockets'],
-    productCount: 3
-  },
-  {
-    name: 'Lighting & LEDs',
-    slug: 'lighting-leds',
-    icon: 'FiSun',
-    description: 'Energy-saving LED batten tubes, ceiling downlights, and smart bulbs',
-    image: categoryImageMap['lighting-leds'],
-    productCount: 3
-  },
-  {
-    name: 'Fans & Appliances',
-    slug: 'fans-appliances',
-    icon: 'FiWind',
-    description: 'BLDC high speed ceiling fans, exhaust fans, and home stabilizers',
-    image: categoryImageMap['fans-appliances'],
-    productCount: 2
-  },
-  {
-    name: 'Motors & Pumps',
-    slug: 'motors-pumps',
-    icon: 'FiSliders',
-    description: 'Submersible pumps, monoblock water pumps, and industrial electric motors',
-    image: categoryImageMap['motors-pumps'],
-    productCount: 2
-  },
-  {
-    name: 'Industrial Electricals',
-    slug: 'industrial-electricals',
-    icon: 'FiCpu',
-    description: 'Three-phase starters, contactors, overload relays, and industrial switchgears',
-    image: categoryImageMap['industrial-electricals'],
-    productCount: 1
-  },
-  {
-    name: 'Smart Home Devices',
-    slug: 'smart-home',
-    icon: 'FiHome',
-    description: 'Smart Wi-Fi plugs, home automation relays, and voice-controlled lighting',
-    image: categoryImageMap['smart-home'],
-    productCount: 1
-  }
-];
-
-const initialProducts = [
-  {
-    name: 'Havells Life Line Copper Wire 2.5 sq mm (90 Meter Red)',
-    slug: 'havells-lifeline-copper-wire-2-5-sqmm',
-    brand: 'Havells',
-    category: 'wires-cables',
-    price: 3450,
-    originalPrice: 4200,
-    discount: 18,
-    stock: 25,
-    rating: 4.8,
-    reviewsCount: 42,
-    description: 'Havells Life Line HRFR insulated copper conductor cable designed for superior electrical safety and fire resistance. High conductivity electrolytic grade copper ensure minimum power loss.',
-    specifications: [
-      { key: 'Length', value: '90 Meters' },
-      { key: 'Conductor Material', value: 'Electrolytic Grade Copper' },
-      { key: 'Insulation Type', value: 'Heat Resistant Flame Retardant (HRFR)' },
-      { key: 'Voltage Grade', value: '1100V' },
-      { key: 'Core Type', value: 'Single Core' }
-    ],
-    images: productImageMap['havells-lifeline-copper-wire-2-5-sqmm'],
-    isFeatured: true,
-    sku: 'HVL-CBL-25R',
-    warranty: '10 Years Brand Warranty'
-  },
-  {
-    name: 'Polycab Green FR PVC House Wire 1.5 sq mm (90m Yellow)',
-    slug: 'polycab-green-fr-wire-1-5-sqmm',
-    brand: 'Polycab',
-    category: 'wires-cables',
-    price: 2150,
-    originalPrice: 2600,
-    discount: 17,
-    stock: 40,
-    rating: 4.7,
-    reviewsCount: 38,
-    description: 'Polycab Green eco-friendly PVC insulated single core house wire with high tensile strength and flame retardancy for domestic circuit wiring.',
-    specifications: [
-      { key: 'Length', value: '90 Meters' },
-      { key: 'Conductor Size', value: '1.5 sq mm' },
-      { key: 'Color', value: 'Yellow' },
-      { key: 'Standard', value: 'IS:694' }
-    ],
-    images: productImageMap['polycab-green-fr-wire-1-5-sqmm'],
-    isFeatured: false,
-    sku: 'PLY-CBL-15Y',
-    warranty: '5 Years Brand Warranty'
-  },
-  {
-    name: 'Finolex Flame Retardant Copper House Wire 4.0 sq mm',
-    slug: 'finolex-fr-copper-wire-4-0-sqmm',
-    brand: 'Finolex',
-    category: 'wires-cables',
-    price: 5200,
-    originalPrice: 6100,
-    discount: 15,
-    stock: 18,
-    rating: 4.9,
-    reviewsCount: 29,
-    description: 'Heavy duty Finolex 4.0 sq mm copper wire ideal for AC circuits, geysers, and high-current domestic appliances.',
-    specifications: [
-      { key: 'Length', value: '90 Meters' },
-      { key: 'Conductor Size', value: '4.0 sq mm' },
-      { key: 'Color', value: 'Black' }
-    ],
-    images: productImageMap['finolex-fr-copper-wire-4-0-sqmm'],
-    isFeatured: false,
-    sku: 'FNX-CBL-40B',
-    warranty: '7 Years Brand Warranty'
-  },
-  {
-    name: 'Anchor Roma Classic 12-Module Modular Switch Board Complete',
-    slug: 'anchor-roma-12-module-switch-board',
-    brand: 'Anchor by Panasonic',
-    category: 'switches-sockets',
-    price: 1290,
-    originalPrice: 1650,
-    discount: 22,
-    stock: 35,
-    rating: 4.8,
-    reviewsCount: 56,
-    description: 'Complete Anchor Roma 12-module switchboard set including 6A smooth switches, 16A power socket, fan regulator, and glossy white frame plate.',
-    specifications: [
-      { key: 'Modules', value: '12 Module Plate' },
-      { key: 'Switches Included', value: '6 x 6A Switches, 1 x 16A Socket, 1 x Step Regulator' },
-      { key: 'Material', value: 'Fire Retardant Polycarbonate' },
-      { key: 'Color', value: 'Glossy White' }
-    ],
-    images: productImageMap['anchor-roma-12-module-switch-board'],
-    isFeatured: true,
-    sku: 'ANC-RMA-12M',
-    warranty: '10 Years Brand Replacement Warranty'
-  },
-  {
-    name: 'Schneider Electric Acti9 32A C-Curve Double Pole MCB',
-    slug: 'schneider-electric-acti9-32a-mcb',
-    brand: 'Schneider Electric',
-    category: 'switches-sockets',
-    price: 850,
-    originalPrice: 1100,
-    discount: 23,
-    stock: 50,
-    rating: 4.9,
-    reviewsCount: 64,
-    description: 'High precision industrial grade double pole MCB for protecting electrical circuits against overload and short circuits. Ideal for main DB boards.',
-    specifications: [
-      { key: 'Current Rating', value: '32 Amps' },
-      { key: 'Poles', value: 'Double Pole (DP)' },
-      { key: 'Curve Type', value: 'C-Curve' },
-      { key: 'Breaking Capacity', value: '10 kA' }
-    ],
-    images: productImageMap['schneider-electric-acti9-32a-mcb'],
-    isFeatured: true,
-    sku: 'SCH-MCB-32DP',
-    warranty: '3 Years Warranty'
-  },
-  {
-    name: 'Legrand Mylinc 16A Heavy Duty Power Socket with Shutter',
-    slug: 'legrand-mylinc-16a-power-socket',
-    brand: 'Legrand',
-    category: 'switches-sockets',
-    price: 320,
-    originalPrice: 420,
-    discount: 24,
-    stock: 60,
-    rating: 4.6,
-    reviewsCount: 22,
-    description: 'Premium child-safe shuttered power socket from Legrand Mylinc series, designed for refrigerators, microwaves, and air conditioners.',
-    specifications: [
-      { key: 'Rating', value: '16 Amp / 6 Amp Combo' },
-      { key: 'Safety', value: 'Inbuilt Safety Shutter' },
-      { key: 'Finish', value: 'Matt White' }
-    ],
-    images: productImageMap['legrand-mylinc-16a-power-socket'],
-    isFeatured: false,
-    sku: 'LGR-SOC-16A',
-    warranty: '5 Years Brand Warranty'
-  },
-  {
-    name: 'Philips T5 20W LED Batten Light (Cool Daylight, Pack of 2)',
-    slug: 'philips-t5-20w-led-batten-light',
-    brand: 'Philips',
-    category: 'lighting-leds',
-    price: 749,
-    originalPrice: 999,
-    discount: 25,
-    stock: 75,
-    rating: 4.8,
-    reviewsCount: 89,
-    description: 'Super bright 20W Philips LED tube light with uniform illumination and surge protection up to 3.5kV. EyeComfort technology eliminates flicker.',
-    specifications: [
-      { key: 'Wattage', value: '20 Watts' },
-      { key: 'Color Temperature', value: '6500K Cool Daylight' },
-      { key: 'Lumens Output', value: '2000 Lumens' },
-      { key: 'Surge Protection', value: '3.5 kV' }
-    ],
-    images: productImageMap['philips-t5-20w-led-batten-light'],
-    isFeatured: true,
-    sku: 'PHP-LED-20W',
-    warranty: '2 Years Manufacturer Warranty'
-  },
-  {
-    name: 'Havells Adore 12W LED Bulb (6500K Cool White, Pack of 4)',
-    slug: 'havells-adore-12w-led-bulb-pack-4',
-    brand: 'Havells',
-    category: 'lighting-leds',
-    price: 549,
-    originalPrice: 799,
-    discount: 31,
-    stock: 100,
-    rating: 4.7,
-    reviewsCount: 110,
-    description: 'Energy-saving Havells LED bulbs with B22 base. Delivers high brightness with 85% energy savings compared to incandescent bulbs.',
-    specifications: [
-      { key: 'Wattage', value: '12 Watts per bulb' },
-      { key: 'Base Type', value: 'B22 Indian Pin Type' },
-      { key: 'Pack Size', value: '4 Bulbs' }
-    ],
-    images: productImageMap['havells-adore-12w-led-bulb-pack-4'],
-    isFeatured: false,
-    sku: 'HVL-LED-12W4',
-    warranty: '2 Years Replacement Warranty'
-  },
-  {
-    name: 'Crompton SilentPro BLDC Ceiling Fan with Remote (1200mm)',
-    slug: 'crompton-silentpro-bldc-ceiling-fan',
-    brand: 'Crompton',
-    category: 'fans-appliances',
-    price: 3890,
-    originalPrice: 5500,
-    discount: 29,
-    stock: 20,
-    rating: 4.9,
-    reviewsCount: 74,
-    description: 'Ultra energy-efficient 5-star BLDC ceiling fan from Crompton. Consumes only 35W at top speed and operates with RF remote control.',
-    specifications: [
-      { key: 'Sweep Size', value: '1200 mm (48 Inch)' },
-      { key: 'Motor Type', value: 'ActivBLDC 5-Star' },
-      { key: 'Power Consumption', value: '35 Watts' },
-      { key: 'Air Delivery', value: '240 CMM' },
-      { key: 'Remote Control', value: 'Included (Timer & Sleep mode)' }
-    ],
-    images: productImageMap['crompton-silentpro-bldc-ceiling-fan'],
-    isFeatured: true,
-    sku: 'CRM-FAN-BLDC',
-    warranty: '5 Years Motor Warranty'
-  },
-  {
-    name: 'Crompton 1 HP Submersible Water Pump with Digital Control Panel',
-    slug: 'crompton-1-hp-submersible-water-pump',
-    brand: 'Crompton',
-    category: 'motors-pumps',
-    price: 11500,
-    originalPrice: 14200,
-    discount: 19,
-    stock: 12,
-    rating: 4.8,
-    reviewsCount: 33,
-    description: 'Heavy duty 1 HP stainless steel submersible pump for borewells and overhead water tanks. Comes with auto cutoff digital starter box.',
-    specifications: [
-      { key: 'Motor Power', value: '1.0 HP (0.75 kW)' },
-      { key: 'Max Head', value: '150 Feet' },
-      { key: 'Discharge', value: '3000 Liters / Hour' },
-      { key: 'Winding', value: '100% Pure Copper' },
-      { key: 'Control Panel', value: 'Digital Starter Box Included' }
-    ],
-    images: productImageMap['crompton-1-hp-submersible-water-pump'],
-    isFeatured: true,
-    sku: 'CRM-PMP-1HP',
-    warranty: '2 Years Manufacturer Warranty'
-  },
-  {
-    name: 'Kirloskar Chhotu 0.5 HP Domestic Monoblock Water Pump',
-    slug: 'kirloskar-chhotu-0-5-hp-pump',
-    brand: 'Kirloskar',
-    category: 'motors-pumps',
-    price: 3450,
-    originalPrice: 4200,
-    discount: 18,
-    stock: 15,
-    rating: 4.7,
-    reviewsCount: 45,
-    description: 'India\'s most trusted domestic water pump for home water lifting from underground sump to overhead tank.',
-    specifications: [
-      { key: 'Motor Power', value: '0.5 HP' },
-      { key: 'Max Head', value: '80 Feet' },
-      { key: 'Pipe Size', value: '25mm x 25mm' }
-    ],
-    images: productImageMap['kirloskar-chhotu-0-5-hp-pump'],
-    isFeatured: false,
-    sku: 'KIR-PMP-05HP',
-    warranty: '1.5 Years Warranty'
-  },
-  {
-    name: 'L&T Three Phase Motor Starter with Overload Protection',
-    slug: 'lnt-three-phase-motor-starter',
-    brand: 'L&T Electricals',
-    category: 'industrial-electricals',
-    price: 2450,
-    originalPrice: 2950,
-    discount: 17,
-    stock: 15,
-    rating: 4.8,
-    reviewsCount: 19,
-    description: 'Industrial grade DOL starter for three phase induction motors and agricultural pumps with adjustable thermal overload relay.',
-    specifications: [
-      { key: 'Phase Type', value: 'Three Phase 415V' },
-      { key: 'Relay Range', value: '9A - 14A' },
-      { key: 'Enclosure', value: 'Dust & Splash Resistant Metal Case' }
-    ],
-    images: productImageMap['lnt-three-phase-motor-starter'],
-    isFeatured: false,
-    sku: 'LNT-IND-DOL3',
-    warranty: '1 Year Industrial Warranty'
-  }
-];
+const { initialCategories, initialProducts } = require('./catalogData');
 
 const initialServices = [
   {
@@ -390,13 +54,13 @@ const initialServices = [
   {
     title: 'Test Electrical Systems',
     slug: 'test-electrical-systems',
-    category: 'Testing',
+    category: 'Inspection & Testing',
     priceEstimate: '₹399 onwards',
-    description: 'Precision electrical testing including earthing resistance, phase voltage balance, insulation resistance (megger test), and statutory safety compliance checks.',
-    icon: 'FiCpu',
+    description: 'Standardized electrical safety testing, load analysis, insulation resistance measurement, and earth resistance verification by licensed technicians.',
+    icon: 'FiActivity',
     duration: '1-2 Hours',
     features: [
-      'Earthing pit resistance & voltage drop measurement',
+      'Digital earth electrode resistance test (Ohms)',
       'Megger insulation resistance & leakage current test',
       'Three-phase voltage & load balancing test',
       'Detailed electrical inspection & compliance report'
@@ -422,24 +86,24 @@ const initialCoupons = [
   {
     code: 'NAVNATH10',
     discountPercentage: 10,
-    maxDiscount: 500,
-    minOrderValue: 200,
+    maxDiscount: 1000,
+    minOrderValue: 500,
     expiryDate: '2027-12-31',
     isActive: true
   },
   {
-    code: 'WELCOME20',
+    code: 'FESTIVE20',
     discountPercentage: 20,
-    maxDiscount: 750,
-    minOrderValue: 500,
+    maxDiscount: 2000,
+    minOrderValue: 2000,
     expiryDate: '2027-12-31',
     isActive: true
   },
   {
     code: 'ELEC15',
     discountPercentage: 15,
-    maxDiscount: 600,
-    minOrderValue: 300,
+    maxDiscount: 1500,
+    minOrderValue: 1000,
     expiryDate: '2027-12-31',
     isActive: true
   }
@@ -447,59 +111,61 @@ const initialCoupons = [
 
 const seedDatabase = async () => {
   try {
-    const existingProducts = await dbHelper.find('products', Product);
-    if (existingProducts && existingProducts.length > 0) {
-      console.log(`📦 [Database Status] Real catalog found with ${existingProducts.length} product(s). Protecting catalog and syncing images if needed.`);
-      for (const prod of existingProducts) {
-        if (productImageMap[prod.slug]) {
-          const currentImg = prod.images && prod.images[0];
-          const targetImgs = productImageMap[prod.slug];
-          if (!currentImg || currentImg.includes('unsplash.com') || currentImg !== targetImgs[0]) {
-            await dbHelper.findByIdAndUpdate('products', Product, prod._id || prod.id, {
-              images: targetImgs
-            });
-          }
-        }
-      }
-      return;
-    }
+    console.log('🔄 [New Navnath Seed] Synchronizing database catalog and administrator account...');
 
-    console.log('🌱 [New Navnath Seed] Empty database detected. Performing initial first-time catalog setup...');
-    // 1. Seed Categories
-    for (const cat of initialCategories) {
-      const exists = await dbHelper.findOne('categories', Category, { slug: cat.slug });
-      if (!exists) {
-        await dbHelper.create('categories', Category, cat);
-      }
-    }
+    // 1. Prepare Admin Account
+    const adminEmail = 'samarthsonawane2006@gmail.com';
+    const adminHash = await bcrypt.hash('Samartha@017', 10);
+    const adminUserData = {
+      name: 'Samarth Sonawane (Store Owner & Administrator)',
+      email: adminEmail,
+      password: adminHash,
+      phone: '+91 8862004797',
+      role: 'admin',
+      addresses: [{
+        fullName: 'Samarth Sonawane',
+        mobile: '8862004797',
+        email: adminEmail,
+        address: 'Shop No. 5, Main Electrical Market, Shivaji Nagar',
+        city: 'Manmad',
+        state: 'Maharashtra',
+        pinCode: '423104',
+        isDefault: true
+      }],
+      wishlist: []
+    };
 
-    // 2. Seed Products
-    for (const prod of initialProducts) {
-      const exists = await dbHelper.findOne('products', Product, { slug: prod.slug });
-      if (!exists) {
-        const created = await dbHelper.create('products', Product, prod);
-        // Add sample reviews
-        await dbHelper.create('reviews', Review, {
-          productId: created._id || created.id,
-          userId: 'demo_user_1',
-          userName: 'Rajesh Patil (Electrical Contractor)',
-          rating: 5,
-          comment: 'Excellent original product from New Navnath Electricals. Very fast delivery and genuine warranty stamp on the box!',
-          date: '2026-07-20'
-        });
-        await dbHelper.create('reviews', Review, {
-          productId: created._id || created.id,
-          userId: 'demo_user_2',
-          userName: 'Sunil Shinde',
-          rating: 5,
-          comment: 'Best price in Nashik market. Highly recommended store for home electrical fittings.',
-          date: '2026-07-23'
-        });
-      }
-    }
-
-    // 3. Seed Services (ensuring only the 4 electrical systems services)
     if (getUseMemoryStore()) {
+      // Clean all user accounts and establish ONLY the admin account
+      memoryStore.users = [
+        {
+          _id: memoryStore.generateId(),
+          id: 'admin_samarth',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          ...adminUserData
+        }
+      ];
+
+      // Overwrite categories with all 10 categories
+      memoryStore.categories = initialCategories.map(c => ({
+        _id: memoryStore.generateId(),
+        id: c.slug,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ...c
+      }));
+
+      // Overwrite products with all 100 products across 10 companies
+      memoryStore.products = initialProducts.map(p => ({
+        _id: memoryStore.generateId(),
+        id: p.slug,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ...p
+      }));
+
+      // Set services
       memoryStore.services = initialServices.map(s => ({
         _id: memoryStore.generateId(),
         id: s.slug,
@@ -507,180 +173,75 @@ const seedDatabase = async () => {
         updatedAt: new Date().toISOString(),
         ...s
       }));
+
+      // Set workers
+      memoryStore.workers = initialWorkers.map(w => ({
+        _id: memoryStore.generateId(),
+        id: w.workerId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ...w
+      }));
+
+      // Set coupons
+      memoryStore.coupons = initialCoupons.map(c => ({
+        _id: memoryStore.generateId(),
+        id: c.code,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ...c
+      }));
+
+      // Reset orders, bookings, and reviews for clean state
+      memoryStore.orders = [];
+      memoryStore.bookings = [];
+      memoryStore.reviews = [];
+      memoryStore.isSeeded = true;
+
+      // Save to disk (dev_store.json)
+      memoryStore.saveToDisk();
     } else {
-      for (const srv of initialServices) {
-        const exists = await dbHelper.findOne('services', Service, { slug: srv.slug });
-        if (!exists) {
-          await dbHelper.create('services', Service, srv);
-        }
+      // MongoDB Mode
+      await User.deleteMany({ email: { $ne: adminEmail } });
+      const existingAdmin = await User.findOne({ email: adminEmail });
+      if (existingAdmin) {
+        existingAdmin.name = adminUserData.name;
+        existingAdmin.password = adminHash;
+        existingAdmin.role = 'admin';
+        existingAdmin.phone = adminUserData.phone;
+        existingAdmin.addresses = adminUserData.addresses;
+        await existingAdmin.save();
+      } else {
+        await User.create(adminUserData);
       }
+
+      // Re-sync categories
+      await Category.deleteMany({});
+      await Category.insertMany(initialCategories);
+
+      // Re-sync products
+      await Product.deleteMany({});
+      await Product.insertMany(initialProducts);
+
+      // Re-sync services
+      await Service.deleteMany({});
+      await Service.insertMany(initialServices);
+
+      // Re-sync workers
+      await Worker.deleteMany({});
+      await Worker.insertMany(initialWorkers);
+
+      // Re-sync coupons
+      await Coupon.deleteMany({});
+      await Coupon.insertMany(initialCoupons);
+
+      // Reset old orders, bookings, and reviews
+      await Order.deleteMany({});
+      await Booking.deleteMany({});
+      await Review.deleteMany({});
     }
 
-    // 3b. Seed Default Worker
-    if (getUseMemoryStore()) {
-      if (!memoryStore.workers || memoryStore.workers.length === 0) {
-        memoryStore.workers = initialWorkers.map(w => ({
-          _id: memoryStore.generateId(),
-          id: w.workerId,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          ...w
-        }));
-      }
-    } else {
-      for (const wrk of initialWorkers) {
-        const exists = await dbHelper.findOne('workers', Worker, { workerId: wrk.workerId });
-        if (!exists) {
-          await dbHelper.create('workers', Worker, wrk);
-        }
-      }
-    }
-
-    // 4. Seed Coupons
-    for (const coupon of initialCoupons) {
-      const exists = await dbHelper.findOne('coupons', Coupon, { code: coupon.code });
-      if (!exists) {
-        await dbHelper.create('coupons', Coupon, coupon);
-      }
-    }
-
-    // 5. Seed Demo Users (Admin & Customer) — passwords are bcrypt-hashed
-    const adminExists = await dbHelper.findOne('users', User, { email: 'admin@navnath.com' });
-    if (!adminExists) {
-      const adminHash = await bcrypt.hash('admin123', 10);
-      await dbHelper.create('users', User, {
-        name: 'Navnath Admin (Store Manager)',
-        email: 'admin@navnath.com',
-        password: adminHash,
-        phone: '+91 9876543210',
-        role: 'admin',
-        addresses: [{
-          fullName: 'New Navnath Store Office',
-          mobile: '9876543210',
-          email: 'admin@navnath.com',
-          address: 'Shop No. 5, Main Electrical Market, Shivaji Nagar',
-          city: 'Nashik',
-          state: 'Maharashtra',
-          pinCode: '422001',
-          isDefault: true
-        }]
-      });
-    }
-
-    const userExists = await dbHelper.findOne('users', User, { email: 'user@navnath.com' });
-    if (!userExists) {
-      const userHash = await bcrypt.hash('user123', 10);
-      await dbHelper.create('users', User, {
-        name: 'Omkesh Bhamare',
-        email: 'user@navnath.com',
-        password: userHash,
-        phone: '+91 9123456789',
-        role: 'customer',
-        addresses: [{
-          fullName: 'Omkesh Bhamare',
-          mobile: '9123456789',
-          email: 'user@navnath.com',
-          address: 'Plot 42, Anand Nagar, Gangapur Road',
-          city: 'Nashik',
-          state: 'Maharashtra',
-          pinCode: '422005',
-          isDefault: true
-        }]
-      });
-    }
-
-    // 6. Seed a sample order & booking for instant Admin dashboard statistics!
-    const sampleOrderExists = await dbHelper.findOne('orders', Order, { orderId: 'ORD-DEMO-1001' });
-    if (!sampleOrderExists) {
-      await dbHelper.create('orders', Order, {
-        orderId: 'ORD-DEMO-1001',
-        userId: 'demo_user_1',
-        customerName: 'Omkesh Bhamare',
-        email: 'user@navnath.com',
-        mobile: '9123456789',
-        items: [
-          {
-            productId: 'demo_p1',
-            name: 'Havells Life Line Copper Wire 2.5 sq mm (90m Red)',
-            price: 3450,
-            quantity: 2,
-            image: productImageMap['havells-lifeline-copper-wire-2-5-sqmm'][0],
-            brand: 'Havells'
-          },
-          {
-            productId: 'demo_p2',
-            name: 'Anchor Roma Classic 12-Module Modular Switch Board',
-            price: 1290,
-            quantity: 1,
-            image: productImageMap['anchor-roma-12-module-switch-board'][0],
-            brand: 'Anchor'
-          }
-        ],
-        shippingAddress: {
-          address: 'Plot 42, Anand Nagar, Gangapur Road',
-          city: 'Nashik',
-          state: 'Maharashtra',
-          pinCode: '422005'
-        },
-        paymentMethod: 'COD',
-        paymentStatus: 'Paid',
-        orderStatus: 'Delivered',
-        subtotal: 8190,
-        totalAmount: 8190,
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
-      });
-
-      await dbHelper.create('orders', Order, {
-        orderId: 'ORD-DEMO-1002',
-        userId: 'demo_user_2',
-        customerName: 'Sanjay Wagh',
-        email: 'sanjay@gmail.com',
-        mobile: '9822012345',
-        items: [
-          {
-            productId: 'demo_p3',
-            name: 'Crompton SilentPro BLDC Ceiling Fan with Remote',
-            price: 3890,
-            quantity: 2,
-            image: productImageMap['crompton-silentpro-bldc-ceiling-fan'][0],
-            brand: 'Crompton'
-          }
-        ],
-        shippingAddress: {
-          address: 'Flat 102, Shanti Heights, College Road',
-          city: 'Nashik',
-          state: 'Maharashtra',
-          pinCode: '422005'
-        },
-        paymentMethod: 'Razorpay',
-        paymentStatus: 'Paid',
-        orderStatus: 'Processing',
-        subtotal: 7780,
-        totalAmount: 7780,
-        createdAt: new Date().toISOString()
-      });
-    }
-
-    const sampleBookingExists = await dbHelper.findOne('bookings', Booking, { bookingId: 'BOOK-DEMO-501' });
-    if (!sampleBookingExists) {
-      await dbHelper.create('bookings', Booking, {
-        bookingId: 'BOOK-DEMO-501',
-        userId: 'demo_user_1',
-        name: 'Omkesh Bhamare',
-        mobile: '9123456789',
-        address: 'Plot 42, Anand Nagar, Gangapur Road, Nashik',
-        serviceId: 'home-electrical-repair',
-        serviceName: 'Home Electrical Repair & Fault Diagnosis',
-        preferredDate: '2026-07-28',
-        message: 'Main distribution board MCB tripping frequently when AC turns on.',
-        status: 'Technician Assigned',
-        technicianName: 'Prakash Kadam (Sr. Electrician)',
-        estimatedCharge: '₹350 + Parts'
-      });
-    }
-
-    memoryStore.isSeeded = true;
-    console.log('✅ [New Navnath Seed] Seeding completed successfully! 12 Products, 7 Categories, 7 Services, 3 Coupons, 2 Demo Orders, and Demo Accounts ready.');
+    console.log('✅ [New Navnath Seed] Complete setup successful! 100 Products across 10 Companies, 10 Categories, 4 Services, 3 Coupons, and single Admin account (samarthsonawane2006@gmail.com) ready.');
   } catch (error) {
     console.error('❌ [New Navnath Seed] Error during seed:', error);
   }
@@ -693,3 +254,10 @@ module.exports = {
   initialServices,
   initialCoupons
 };
+
+if (require.main === module) {
+  seedDatabase().then(() => {
+    console.log('🏁 Seed process complete.');
+    process.exit(0);
+  });
+}

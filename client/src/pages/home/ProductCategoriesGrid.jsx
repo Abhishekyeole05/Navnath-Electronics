@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { 
-  FiActivity, FiToggleRight, FiSun, FiWind, FiSliders, FiCpu, FiHome, FiArrowRight 
+  FiActivity, FiToggleRight, FiSun, FiWind, FiSliders, FiCpu, FiHome, FiArrowRight,
+  FiTv, FiBox, FiLayers 
 } from 'react-icons/fi';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -13,7 +14,10 @@ const iconMap = {
   FiWind: <FiWind />,
   FiSliders: <FiSliders />,
   FiCpu: <FiCpu />,
-  FiHome: <FiHome />
+  FiHome: <FiHome />,
+  FiTv: <FiTv />,
+  FiBox: <FiBox />,
+  FiLayers: <FiLayers />
 };
 
 const ProductCategoriesGrid = () => {

@@ -20,9 +20,9 @@ const translations = {
     my_dashboard: "My Dashboard & Orders",
     admin_portal: "⚡ Admin Portal",
     sign_out: "Sign Out",
-    instant_demo_access: "INSTANT DEMO ACCESS:",
-    demo_customer: "Demo Customer Account",
-    demo_admin: "⚡ Demo Admin Login",
+    customer_login: "Customer Sign In",
+    admin_login: "⚡ Store Admin Login",
+    create_account: "Create an Account",
 
     // Common Buttons & Labels
     add_to_cart: "Add to Cart",
@@ -123,9 +123,9 @@ const translations = {
     my_dashboard: "माझा डॅशबोर्ड आणि ऑर्डर्स",
     admin_portal: "⚡ ॲडमिन पोर्टल",
     sign_out: "बाहेर पडा",
-    instant_demo_access: "तात्काळ डेमो प्रवेश:",
-    demo_customer: "डेमो ग्राहक खाते",
-    demo_admin: "⚡ डेमो ॲडमिन लॉगिन",
+    customer_login: "ग्राहक लॉगिन",
+    admin_login: "⚡ स्टोअर ॲडमिन लॉगिन",
+    create_account: "नवीन खाते तयार करा",
 
     // Common Buttons & Labels
     add_to_cart: "कार्टमध्ये जोडा",
@@ -226,9 +226,9 @@ const translations = {
     my_dashboard: "मेरा डैशबोर्ड और ऑर्डर",
     admin_portal: "⚡ एडमिन पोर्टल",
     sign_out: "साइन आउट",
-    instant_demo_access: "इंस्टेंट डेमो एक्सेस:",
-    demo_customer: "डेमो ग्राहक खाता",
-    demo_admin: "⚡ डेमो एडमिन लॉगिन",
+    customer_login: "ग्राहक लॉगिन",
+    admin_login: "⚡ स्टोर एडमिन लॉगिन",
+    create_account: "नया खाता बनाएं",
 
     // Common Buttons & Labels
     add_to_cart: "कार्ट में जोड़ें",

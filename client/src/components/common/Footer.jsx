@@ -82,7 +82,7 @@ const Footer = () => {
               <li><Link to="/services">{t('nav_services', 'Book Home Electrician Service')}</Link></li>
               <li><Link to="/contact">{t('nav_contact', 'Contact Shop & Map')}</Link></li>
               <li><Link to="/dashboard">{t('my_dashboard', 'My Dashboard & Order Tracking')}</Link></li>
-              <li><Link to="/admin" style={{ color: 'var(--accent-yellow)' }}>⚡ Admin Portal (Demo)</Link></li>
+              <li><Link to="/login?role=admin" style={{ color: 'var(--accent-yellow)' }}>⚡ {t('admin_portal', 'Admin Portal')}</Link></li>
             </ul>
           </div>
 

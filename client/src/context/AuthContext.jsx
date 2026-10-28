@@ -89,15 +89,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('navnath_wishlist');
   };
 
-  // Quick helper for Demo testing
-  const loginAsDemoAdmin = async () => {
-    return await login('admin@navnath.com', 'admin123');
-  };
-
-  const loginAsDemoCustomer = async () => {
-    return await login('user@navnath.com', 'user123');
-  };
-
   return (
     <AuthContext.Provider value={{
       user,
@@ -105,9 +96,7 @@ export const AuthProvider = ({ children }) => {
       loading,
       login,
       register,
-      logout,
-      loginAsDemoAdmin,
-      loginAsDemoCustomer
+      logout
     }}>
       {children}
     </AuthContext.Provider>

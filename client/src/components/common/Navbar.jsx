@@ -14,7 +14,7 @@ import axios from 'axios';
 const Navbar = () => {
   const { cartItems } = useCart();
   const { wishlist } = useWishlist();
-  const { user, logout, loginAsDemoAdmin, loginAsDemoCustomer } = useAuth();
+  const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { language, changeLanguage, t } = useLanguage();
   
@@ -72,17 +72,7 @@ const Navbar = () => {
     }
   };
 
-  const handleDemoAdmin = async () => {
-    await loginAsDemoAdmin();
-    setIsUserMenuOpen(false);
-    navigate('/admin');
-  };
 
-  const handleDemoCustomer = async () => {
-    await loginAsDemoCustomer();
-    setIsUserMenuOpen(false);
-    navigate('/dashboard');
-  };
 
   const navLinks = [
     { name: t('nav_home'), path: '/' },
@@ -523,34 +513,35 @@ const Navbar = () => {
                   ) : (
                     <div style={{ padding: '16px' }}>
                       <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                        Sign in for faster checkout and order tracking
+                        Sign in for faster checkout, order tracking, and electrician booking
                       </div>
                       <Link
                         to="/login"
                         onClick={() => setIsUserMenuOpen(false)}
                         className="btn btn-primary"
-                        style={{ width: '100%', marginBottom: '8px' }}
+                        style={{ width: '100%', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
                       >
-                        Sign In / Register
+                        <FiUser /> {t('customer_login', 'Customer Sign In')}
+                      </Link>
+                      <Link
+                        to="/login?role=admin"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="btn btn-outline"
+                        style={{ width: '100%', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.86rem' }}
+                      >
+                        <FiShield /> {t('admin_login', '⚡ Store Admin Login')}
                       </Link>
 
-                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', margin: '10px 0 6px' }}>
-                        INSTANT DEMO ACCESS:
+                      <div style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                        New customer?{' '}
+                        <Link
+                          to="/register"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          style={{ color: 'var(--primary-blue)', fontWeight: 700 }}
+                        >
+                          {t('create_account', 'Create an Account')}
+                        </Link>
                       </div>
-                      <button
-                        onClick={handleDemoCustomer}
-                        className="btn btn-outline"
-                        style={{ width: '100%', fontSize: '0.8rem', padding: '8px', marginBottom: '6px' }}
-                      >
-                        Demo Customer Account
-                      </button>
-                      <button
-                        onClick={handleDemoAdmin}
-                        className="btn btn-accent"
-                        style={{ width: '100%', fontSize: '0.8rem', padding: '8px' }}
-                      >
-                        ⚡ Demo Admin Login
-                      </button>
                     </div>
                   )}
                 </div>

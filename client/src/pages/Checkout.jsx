@@ -570,17 +570,6 @@ const Checkout = ({ onToast }) => {
                   </>
                 )}
               </button>
-
-              {/* Instant Demo Testing Button */}
-              <button
-                type="button"
-                onClick={(e) => handleInitiateOrder(e, true)}
-                disabled={processing}
-                className="btn btn-accent"
-                style={{ width: '100%', padding: '12px', fontSize: '0.88rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-              >
-                <FiZap /> ⚡ 1-Click Instant Demo Order (Test Mode)
-              </button>
             </form>
           </div>
 
