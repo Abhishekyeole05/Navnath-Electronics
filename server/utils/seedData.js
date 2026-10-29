@@ -226,13 +226,36 @@ const seedDatabase = async () => {
         console.log(`ℹ️  [Seed] Categories already seeded (${categoryCount}), skipping.`);
       }
 
-      // 3. Seed products only if collection is empty
+      // 3. Seed or Sync products with latest catalog images & specs
       const productCount = await Product.countDocuments();
       if (productCount === 0) {
         await Product.insertMany(initialProducts);
         console.log(`✅ [Seed] Inserted ${initialProducts.length} products.`);
       } else {
-        console.log(`ℹ️  [Seed] Products already seeded (${productCount}), skipping.`);
+        // Sync products so new images and specs from catalogData are immediately reflected in MongoDB Atlas
+        for (const p of initialProducts) {
+          await Product.updateOne(
+            { slug: p.slug },
+            {
+              $set: {
+                name: p.name,
+                images: p.images,
+                price: p.price,
+                originalPrice: p.originalPrice,
+                discount: p.discount,
+                description: p.description,
+                specifications: p.specifications,
+                warranty: p.warranty,
+                brand: p.brand,
+                category: p.category,
+                isFeatured: p.isFeatured,
+                sku: p.sku
+              }
+            },
+            { upsert: true }
+          );
+        }
+        console.log(`✅ [Seed] Synced ${initialProducts.length} products with latest images and specifications.`);
       }
 
       // 4. Seed services only if collection is empty
