@@ -136,7 +136,7 @@ const seedDatabase = async () => {
     };
 
     if (getUseMemoryStore()) {
-      // Clean all user accounts and establish ONLY the admin account
+      // In-memory mode: full reset for local development
       memoryStore.users = [
         {
           _id: memoryStore.generateId(),
@@ -147,7 +147,6 @@ const seedDatabase = async () => {
         }
       ];
 
-      // Overwrite categories with all 10 categories
       memoryStore.categories = initialCategories.map(c => ({
         _id: memoryStore.generateId(),
         id: c.slug,
@@ -156,7 +155,6 @@ const seedDatabase = async () => {
         ...c
       }));
 
-      // Overwrite products with all 100 products across 10 companies
       memoryStore.products = initialProducts.map(p => ({
         _id: memoryStore.generateId(),
         id: p.slug,
@@ -165,7 +163,6 @@ const seedDatabase = async () => {
         ...p
       }));
 
-      // Set services
       memoryStore.services = initialServices.map(s => ({
         _id: memoryStore.generateId(),
         id: s.slug,
@@ -174,7 +171,6 @@ const seedDatabase = async () => {
         ...s
       }));
 
-      // Set workers
       memoryStore.workers = initialWorkers.map(w => ({
         _id: memoryStore.generateId(),
         id: w.workerId,
@@ -183,7 +179,6 @@ const seedDatabase = async () => {
         ...w
       }));
 
-      // Set coupons
       memoryStore.coupons = initialCoupons.map(c => ({
         _id: memoryStore.generateId(),
         id: c.code,
@@ -192,53 +187,83 @@ const seedDatabase = async () => {
         ...c
       }));
 
-      // Reset orders, bookings, and reviews for clean state
       memoryStore.orders = [];
       memoryStore.bookings = [];
       memoryStore.reviews = [];
       memoryStore.isSeeded = true;
 
-      // Save to disk (dev_store.json)
       memoryStore.saveToDisk();
     } else {
-      // MongoDB Mode
-      await User.deleteMany({ email: { $ne: adminEmail } });
+      // ============================================================
+      // MongoDB Mode — Smart Idempotent Seed (safe for production)
+      // NEVER deletes customer accounts, orders, bookings, or reviews
+      // Only creates data that does not already exist
+      // ============================================================
+
+      // 1. Upsert admin account only — never touch other users
       const existingAdmin = await User.findOne({ email: adminEmail });
       if (existingAdmin) {
         existingAdmin.name = adminUserData.name;
         existingAdmin.password = adminHash;
         existingAdmin.role = 'admin';
         existingAdmin.phone = adminUserData.phone;
-        existingAdmin.addresses = adminUserData.addresses;
+        if (!existingAdmin.addresses || existingAdmin.addresses.length === 0) {
+          existingAdmin.addresses = adminUserData.addresses;
+        }
         await existingAdmin.save();
+        console.log('✅ [Seed] Admin account verified/updated.');
       } else {
         await User.create(adminUserData);
+        console.log('✅ [Seed] Admin account created.');
       }
 
-      // Re-sync categories
-      await Category.deleteMany({});
-      await Category.insertMany(initialCategories);
+      // 2. Seed categories only if collection is empty
+      const categoryCount = await Category.countDocuments();
+      if (categoryCount === 0) {
+        await Category.insertMany(initialCategories);
+        console.log(`✅ [Seed] Inserted ${initialCategories.length} categories.`);
+      } else {
+        console.log(`ℹ️  [Seed] Categories already seeded (${categoryCount}), skipping.`);
+      }
 
-      // Re-sync products
-      await Product.deleteMany({});
-      await Product.insertMany(initialProducts);
+      // 3. Seed products only if collection is empty
+      const productCount = await Product.countDocuments();
+      if (productCount === 0) {
+        await Product.insertMany(initialProducts);
+        console.log(`✅ [Seed] Inserted ${initialProducts.length} products.`);
+      } else {
+        console.log(`ℹ️  [Seed] Products already seeded (${productCount}), skipping.`);
+      }
 
-      // Re-sync services
-      await Service.deleteMany({});
-      await Service.insertMany(initialServices);
+      // 4. Seed services only if collection is empty
+      const serviceCount = await Service.countDocuments();
+      if (serviceCount === 0) {
+        await Service.insertMany(initialServices);
+        console.log(`✅ [Seed] Inserted ${initialServices.length} services.`);
+      } else {
+        console.log(`ℹ️  [Seed] Services already seeded (${serviceCount}), skipping.`);
+      }
 
-      // Re-sync workers
-      await Worker.deleteMany({});
-      await Worker.insertMany(initialWorkers);
+      // 5. Seed workers only if collection is empty
+      const workerCount = await Worker.countDocuments();
+      if (workerCount === 0) {
+        await Worker.insertMany(initialWorkers);
+        console.log(`✅ [Seed] Inserted ${initialWorkers.length} workers.`);
+      } else {
+        console.log(`ℹ️  [Seed] Workers already seeded (${workerCount}), skipping.`);
+      }
 
-      // Re-sync coupons
-      await Coupon.deleteMany({});
-      await Coupon.insertMany(initialCoupons);
+      // 6. Seed coupons only if collection is empty
+      const couponCount = await Coupon.countDocuments();
+      if (couponCount === 0) {
+        await Coupon.insertMany(initialCoupons);
+        console.log(`✅ [Seed] Inserted ${initialCoupons.length} coupons.`);
+      } else {
+        console.log(`ℹ️  [Seed] Coupons already seeded (${couponCount}), skipping.`);
+      }
 
-      // Reset old orders, bookings, and reviews
-      await Order.deleteMany({});
-      await Booking.deleteMany({});
-      await Review.deleteMany({});
+      // NOTE: Orders, Bookings, and Reviews are NEVER modified.
+      // Customer accounts are NEVER deleted. Production-safe.
     }
 
     console.log('✅ [New Navnath Seed] Complete setup successful! 100 Products across 10 Companies, 10 Categories, 4 Services, 3 Coupons, and single Admin account (samarthsonawane2006@gmail.com) ready.');

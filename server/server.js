@@ -13,9 +13,56 @@ const app = express();
 
 const path = require('path');
 
-// Middleware
-app.use(cors());
+// ==========================================
+// CORS Configuration
+// Allows frontend URL(s), Render preview domains, and localhost
+// ==========================================
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000'
+];
+
+if (process.env.FRONTEND_URL) {
+  process.env.FRONTEND_URL.split(',').forEach(url => {
+    const clean = url.trim().replace(/\/+$/, '');
+    if (clean) allowedOrigins.push(clean);
+  });
+}
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Postman, server-to-server)
+    if (!origin) return callback(null, true);
+
+    const cleanOrigin = origin.replace(/\/+$/, '');
+
+    const isExplicitlyAllowed = allowedOrigins.some(
+      allowed => cleanOrigin === allowed || cleanOrigin.startsWith(allowed)
+    );
+
+    // Also permit any *.onrender.com or *.vercel.app domain for seamless deployment previews
+    const isRenderOrVercel =
+      cleanOrigin.endsWith('.onrender.com') ||
+      cleanOrigin.endsWith('.vercel.app');
+
+    if (isExplicitlyAllowed || isRenderOrVercel || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      console.warn(`⚠️ [CORS] Blocked request from origin: ${origin}`);
+      callback(null, false);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Handle preflight for all routes
+
 app.use(express.json());
+
 // Serve static client assets (e.g. product and category images)
 app.use(express.static(path.join(__dirname, '../client/public')));
 
@@ -56,11 +103,12 @@ const startServer = async () => {
   await connectDB();
   await seedDatabase();
 
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`=======================================================`);
     console.log(`⚡ [New Navnath Server] API Running on Port ${PORT}`);
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`🗄️  Database: ${getIsConnected() ? 'MongoDB Atlas (Cloud Cluster)' : 'Local In-Memory Demo Store'}`);
+    console.log(`🔒 CORS Allowed Origins: ${allowedOrigins.join(', ')}`);
     console.log(`=======================================================`);
   });
 };
