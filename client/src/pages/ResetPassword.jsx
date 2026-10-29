@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
 import { FiLock, FiEye, FiEyeOff, FiCheckCircle, FiAlertCircle, FiArrowLeft, FiShield } from 'react-icons/fi';
 import PasswordStrengthMeter, { checkPasswordStrength } from '../components/common/PasswordStrengthMeter';
 
@@ -39,17 +40,10 @@ const ResetPassword = () => {
     try {
       setLoading(true);
 
-      const response = await fetch(`/api/auth/reset-password/${token}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ password })
-      });
+      const response = await axios.post(`/api/auth/reset-password/${token}`, { password });
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         setError(data.message || 'Unable to reset password. The link may be expired.');
         return;
       }
@@ -61,7 +55,8 @@ const ResetPassword = () => {
       }, 2000);
 
     } catch (err) {
-      setError('Unable to connect to the backend server. Please check your connection.');
+      const msg = err.response?.data?.message || 'Unable to connect to the backend server. Please check your connection.';
+      setError(msg);
     } finally {
       setLoading(false);
     }

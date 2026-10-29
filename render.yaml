@@ -1,0 +1,49 @@
+services:
+  # ========================================================
+  # Backend API Web Service
+  # ========================================================
+  - type: web
+    name: navnath-electronics-backend
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false   # Set manually in Render Dashboard: Atlas Connection String
+      - key: JWT_SECRET
+        generateValue: true  # Render auto-generates a secure 256-bit random key
+      - key: FRONTEND_URL
+        sync: false   # Set to your Frontend URL (e.g. https://navnath-electronics-frontend.onrender.com)
+      - key: EMAIL_USER
+        sync: false   # Optional: Gmail address for password reset emails
+      - key: EMAIL_PASS
+        sync: false   # Optional: Gmail App Password (16 characters)
+      - key: RAZORPAY_KEY_ID
+        sync: false   # Optional: Razorpay Key ID
+      - key: RAZORPAY_KEY_SECRET
+        sync: false   # Optional: Razorpay Secret
+
+  # ========================================================
+  # Frontend Static Site (SPA with React Router)
+  # ========================================================
+  - type: web
+    name: navnath-electronics-frontend
+    runtime: static
+    plan: free
+    rootDir: client
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      # SPA Catch-all: Rewrites all client-side routes (e.g. /products, /login) to index.html to prevent 404 on refresh
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        sync: false   # Set to your Render Backend URL (e.g. https://navnath-electronics-backend.onrender.com)

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { FiMail, FiArrowLeft, FiCheckCircle, FiAlertCircle, FiCopy, FiCheck, FiExternalLink, FiKey } from 'react-icons/fi';
 
 const ForgotPassword = () => {
@@ -28,17 +29,10 @@ const ForgotPassword = () => {
     try {
       setLoading(true);
 
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email })
-      });
+      const response = await axios.post('/api/auth/forgot-password', { email });
+      const data = response.data;
 
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         setError(data.message || 'Unable to process password reset request.');
         return;
       }
@@ -52,7 +46,8 @@ const ForgotPassword = () => {
       }
 
     } catch (err) {
-      setError('Unable to connect to the backend server. Please ensure the server is running.');
+      const msg = err.response?.data?.message || 'Unable to connect to the backend server. Please ensure the server is running.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
