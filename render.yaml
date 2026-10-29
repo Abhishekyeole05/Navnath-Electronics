@@ -31,14 +31,14 @@ services:
 
   # ========================================================
   # Frontend Static Site (SPA with React Router)
+  # Note: Static sites are hosted on Render CDN and do not use a 'plan' field
   # ========================================================
   - type: web
     name: navnath-electronics-frontend
     runtime: static
-    plan: free
     rootDir: client
     buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
+    staticPublishPath: dist
     routes:
       # SPA Catch-all: Rewrites all client-side routes (e.g. /products, /login) to index.html to prevent 404 on refresh
       - type: rewrite
